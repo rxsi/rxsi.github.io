@@ -1,2 +1,1 @@
-Welcome to my blog
-have fun~
+Welcome to my blog, have fun
