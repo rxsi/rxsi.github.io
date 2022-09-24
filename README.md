@@ -1,1 +1,2 @@
-Hello World
+Welcome to my blog
+have fun~
