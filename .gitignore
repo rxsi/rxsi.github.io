@@ -2,7 +2,6 @@
 .bundle
 .sass-cache/
 _site/
-_posts/
 Gemfile.lock
 .DS_Store
 downloads/
