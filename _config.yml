@@ -14,6 +14,7 @@ sass:
 paginate: 15
 paginate_path: "page/:num"
 baseurl: ""
+markdown: kramdown
 
 permalink: /posts/:title/
 
