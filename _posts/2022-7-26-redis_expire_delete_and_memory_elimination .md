@@ -7,6 +7,9 @@ tags: redis lru lfu
 excerpt: 
 ---
 
+* content
+{:toc}
+
 # Redis 架构
 ## redisServer
 当我们启动 Redis 时，会创建一个`redisServer`结构体，保存了当前服务器的信息，以及当前所有的数据库信息
