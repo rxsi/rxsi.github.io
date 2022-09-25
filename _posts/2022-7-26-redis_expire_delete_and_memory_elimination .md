@@ -25,7 +25,7 @@ struct redisServer {
 Redis 默认的数据库数量是`16`个，在配置`redis/redis.conf`中可进行配置修改
 可以通过下面这张图表示：
 
-![image.png](https://github.com/rxsi/rxsi.github.io/raw/master/images/redis%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93.png)
+![image.png](/images/redis_expire_delete_and_memory_elimination/dbnum.png)
 > 注：Redis 数据库是无法指定名字的，只能根据数组下标表示，通过 SELECT xx 的方式进行切换，默认连接数据库是 0 号数据库
 
 ## redisDb
@@ -40,43 +40,43 @@ typedef struct redisDb {
 } redisDb;
 ```
 ### 示例
-![image.png](https://github.com/rxsi/rxsi.github.io/raw/master/images/redisDB%E7%BB%93%E6%9E%84.png)
+![image.png](/images/redis_expire_delete_and_memory_elimination/redisdb.png)
 # 过期删除
 ## 设置过期时间
 Redis 支持直接对某个已经存在的 key 进行过期时间的设定，有以下 4 个命令：
 ```c
-expire <key> <n>：设置 key 在 n 秒之后过期
+expire <key> <n> // 设置 key 在 n 秒之后过期
 
-pexpire <key> <n>：设置 key 在 n 毫秒后过期
+pexpire <key> <n> // 设置 key 在 n 毫秒后过期
 
-expireat <key> <n>：设置 key 在某个时间戳之后过期，单位秒
+expireat <key> <n> // 设置 key 在某个时间戳之后过期，单位秒
 
-pexpireat <key> <n>：设置 key 在某个时间戳之后过期，单位毫秒
+pexpireat <key> <n> // 设置 key 在某个时间戳之后过期，单位毫秒
 ```
 
 Redis 也支持在设置键值对时直接设置过期时间，有以下 3 个命令：
 ```c
-set <key> <value> ex <n>：设置键值对时，指定 n 秒之后过期
+set <key> <value> ex <n> // 设置键值对时，指定 n 秒之后过期
 
-set <key> <value> px <n>：设置键值对时，指定 n 毫秒之后过期
+set <key> <value> px <n> // 设置键值对时，指定 n 毫秒之后过期
 
-setex <key> <n> <value>：设置键值对时，指定 n 秒之后过期
+setex <key> <n> <value> // 设置键值对时，指定 n 秒之后过期
 ```
 
 查看某个键的过期时间，有以下命令：
 ```c
-TTL <key>：显示 key 剩余的过期时间，如果 key 没有过期时间，则返回 -1
+TTL <key> // 显示 key 剩余的过期时间，如果 key 没有过期时间，则返回 -1
 ```
 
 取消某个键的过期时间，有以下命令：
 ```c
-persist <key>：取消 key 的过期时间
+persist <key> // 取消 key 的过期时间
 ```
 ## 过期键读取流程
 从上面的介绍我们知道，键的过期时间保存在`redisDb.expire`字段中，是一个`dict`结构。
 当客户端要读取键值对时，流程如下：
 
-![image.png](https://github.com/rxsi/rxsi.github.io/raw/master/images/%E8%BF%87%E6%9C%9F%E9%94%AE%E8%AF%BB%E5%8F%96%E6%B5%81%E7%A8%8B.png)
+![image.png](/images/redis_expire_delete_and_memory_elimination/read_expire.png)
 ## 过期删除策略
 ### 惰性删除
 当 key 过期时，不主动删除该过期的 key，而是等待下一次对该 key 进行读写时，判断到该 key 已过期后再进行删除
@@ -154,7 +154,7 @@ Redis 实现的 LRU 策略虽然占用更少的内存，但是也仍然无法处
 全称为最近最不常用规则，会根据数据的访问频率来淘汰数据，核心思想是”如果数据过去被多次访问，那么将来被访问的概率也会更高“
 Redis 对于 LFU 的实现依然只是沿用了`redisObject.lru`字段，将这`24bits`的字段分为了两段存储，高`16bits`存储上次**访问的时间**（ldt），后`8`位记录**访问的频次**（logc）
 
-![](https://github.com/rxsi/rxsi.github.io/raw/master/images/lfu%E4%B8%8Blru%E9%94%AE%E7%9A%84%E7%BB%84%E6%88%90.webp)
+![](/images/redis_expire_delete_and_memory_elimination/lru_bits.png)
 ##### logc的设计
 对于每个新键的 可以，该值默认为`5`，且**该值会随时间推移而衰减**
 每当 key 被访问，先根据已保存的`ldt`和当前时间戳计算衰减值，对`logc`值进行衰减。当上一次访问时间和本次访问时间间隔越大，则衰减幅度越大，这样即实现了根据`**访问频次**`来淘汰数据，而非单纯的访问次数。
