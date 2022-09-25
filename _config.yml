@@ -19,7 +19,12 @@ github_username:  rxsi
 # comments
 # two ways to comment, only choose one, and use your own short name
 # 两种评论插件，选一个就好了，使用自己的 short_name
-disqus_shortname: rxsi
+# disqus_shortname: rxsi
+gitalk:
+    enable: true
+    repo: rxsi.github.io
+    client_id: 69b4d1880d2f4f9087ae
+    client_secret: 85ad6097497222e17ca364a540655ae7caf9a184
 
 # statistic analysis 统计代码
 # 百度统计 id，将统计代码替换为自己的百度统计id，即
