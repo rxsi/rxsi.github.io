@@ -124,6 +124,7 @@ id(A)
 
 从上面的演示，可以知道对于直接 import 模块而言，reload 之后可以使通过该模块引用访问的函数生效，可以达到热更的效果。
 但是对于 from A import xxx 而言，因为直接保存的是属性的地址，因此并不能访问到修改后的新属性
+
 演示：
 
 ```python
@@ -153,6 +154,7 @@ id(Method) == id(A.Method)
 ```
 
 由于 reload 会重新生成新的属性对象，对旧的命名空间进行覆盖，因此当我们不希望重新生成对象时，可以使用 "xxx" not in globals() 进行判断
+
 演示：
 
 ```python
@@ -169,10 +171,10 @@ reload(A)
 # no_SingleClass Init!
 ```
 
-结论：
-1. 使用 reload 可以保持模块对象地址不变，因此不需要处理模块对象引用
-2. 当导入的方式是 form ... import xxx 时，需要进行额外处理
-3. 对于不希望reload之后重新生成的对象，应该使用 **"xxx" not in globals()** 进行拦截
+> 结论：
+> 1. 使用 reload 可以保持模块对象地址不变，因此不需要处理模块对象引用
+> 2. 当导入的方式是 form ... import xxx 时，需要进行额外处理
+> 3. 对于不希望reload之后重新生成的对象，应该使用 **"xxx" not in globals()** 进行拦截
 
 ### 热更处理
 
@@ -360,7 +362,7 @@ if hasattr(mod, "Init" and mod.Init.__module__ == mod.__name__:
 
 ### 不能热更的情况
 
-- **类热更前后的 __slots__ 不一致**
+#### 类热更前后的 __slots__ 不一致
 
 实例代码：
 
@@ -399,7 +401,7 @@ mappingproxy({'__module__': 'A',
 当访问这些属性时，是通过偏移值信息去直接计算该 Member对象 在类内存上的位置。
 也就是说当一个旧的类对象创建之后，他为这些**slots**分配的内存空间就已经是固定好的了，因此并不能做到在不修改原类对象地址的情况下，进行**slots**修改后的扩容/缩容。
 
-- **metaclass 元类**
+#### metaclass 元类
 
 实例代码：
 
@@ -431,7 +433,7 @@ if hasattr(newobj, '__metaclass__') and hasattr(newobj, '__class__') and newobj.
       return
 ```
 
-- **__init__ 方法定义了新的属性，由旧类实例化的对象没有创建新属性**
+#### __init__ 方法定义了新的属性，由旧类实例化的对象没有创建新属性
 
 实例代码：
 
