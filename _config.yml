@@ -37,7 +37,6 @@ kramdown:
   input: GFM
   syntax_highlighter: rouge
 
-duoshuo_shortname: rxsi
 # port
 # port: 1234
 
