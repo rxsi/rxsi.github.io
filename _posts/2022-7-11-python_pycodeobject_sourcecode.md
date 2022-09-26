@@ -53,11 +53,11 @@ code.py 中的 Fun2 函数
 ```
 查看文件夹，可以看到在程序运行之后，创建了文件夹`__pycache__`和新文件`code.cpython-36.pyc`
 
-![image.png](/images/python_pycodeobject_sourcecode/pyc_file.png)
+![pyc_file.png](/images/python_pycodeobject_sourcecode/pyc_file.png)
 
 创建出来的`.pyc`文件，实际上就是一种编译后文件，当我们对某个文件进行`import`操作时，Python 就会为我们创建对应的`.pyc`文件，以备程序重复运行时使用。所以 Python 实际上是一种需要先编译后再运行的程序，这类似于 Java 语言，只不过 Python 的解释器同时充当了编译器和虚拟机的角色
 
-![image.png](/images/python_pycodeobject_sourcecode/python_run.png)
+![python_run.png](/images/python_pycodeobject_sourcecode/python_run.png)
 
 而之所以没有为 main.py 文件生成`.pyc`文件，是因为这是一个一次性的运行文件，Python 解释器不会为只可能运行一次的文件生成 pyc 文件
 后续再次导入`code.py`时，优先就会使用`.pyc`文件进行反序列化
@@ -91,11 +91,11 @@ Fun3()
 ```
 双击运行重新生成的`.pyc`文件，就可以看到生成的控制台窗口了
 
-![image.png](/images/python_pycodeobject_sourcecode/pyc_terminal.png)
+![pyc_terminal.png](/images/python_pycodeobject_sourcecode/pyc_terminal.png)
 
 当程序识别到`.pyw`文件，系统会使用`pythonw.exe`程序运行，这屏蔽了代码中的`stdout`、`stderr`入口，因此就不会有消息输出到控制台了
 
-![image.png](/images/python_pycodeobject_sourcecode/pyw_exe.png)
+![pyw_exe.png](/images/python_pycodeobject_sourcecode/pyw_exe.png)
 
 ### .pyd 文件
 `.pyd`文件格式是通过 D 语言编译后生成的二进制文件，这种文件无法被反编译，因此安全性较高
@@ -414,7 +414,7 @@ b'\x00\x01\x04\x01\x04\x01' # 每两个16进制为一组
 ```
 这里用一个表格作为说明
 
-| 源码序号 | 字节码序号 | co_lnotab |  |
+| 源码序号 | 字节码序号 | co_lnotab |
 | --- | --- | --- | --- |
 |  |  | 源码增量 | 字节码增量 |
 | co_firstlineno = 13 | 0 |  |  |
@@ -425,7 +425,7 @@ b'\x00\x01\x04\x01\x04\x01' # 每两个16进制为一组
 
 `PyCodeObject`包含的其他信息，这里不做代码演示
 最后以一张图作为概括
-![image.png](/images/python_pycodeobject_sourcecode/PyCodeObject.png)
+![PyCodeObject.png](/images/python_pycodeobject_sourcecode/PyCodeObject.png)
 ## global 和 nonlocal
 Python 的名字查找是按照`局部名字空间`->`全局名字空间`->`内置名字空间`的顺序进行变量名的查找，这意味着如果在前一个名字空间中查找到名字，那么相对应后面的名字空间的同名变量将会被屏蔽。
 有时候我们需要强制指定某个变量的查询路径，因此 Python 提供了`global`和`nonlocal`这两个关键字
@@ -484,6 +484,7 @@ def fun1():
 
 1. 代码中最好避免在不同的名字空间中使用同名的变量
 2. 在使用全局变量的地方应该都加上`global`关键字
+
 ### nonlocal
 `nonlocal`的语义和`global`类似，只不过是应用于闭包函数的情景，加载闭包变量的字节码是`LOAD_DEREF`，这里不做赘述
 # .pyc 文件
@@ -498,7 +499,9 @@ def fun1():
 '330d0d0a'
 ```
 对比上面生成的`code.cpython-36.pyc`文件的前 4 字节内容，可见是一致的
-![image.png](/images/python_pycodeobject_sourcecode/magic_number.png)
+
+![magic_number.png](/images/python_pycodeobject_sourcecode/magic_number.png)
+
 ### 文件修改时间
 文件修改时间记录了当前文件被生成的时间，在代码中会比较当前`.pyc`文件与`.py`文件的时间戳，如果发现`.pyc`文件的修改时间落后于原始文件的时间，则会进行重生成
 ### 源文件大小
@@ -508,7 +511,9 @@ def fun1():
 ## 源码分析
 我们知道当程序对某个模块进行导入时，就会生成对应的`.pyc`文件，我们从这个过程来看下这个过程对应的底层源码实现。
 具体`import`的底层实现不是本节的关注点，因此一些中间的调用流程这里用一张图来表示
-![](/images/python_pycodeobject_sourcecode/import.png)
+
+![import.png](/images/python_pycodeobject_sourcecode/import.png)
+
 在`_find_and_load`函数的实现中，会经过一层层的调用跳转之后，最终调用的是`sys.path_hooks`中三种`loader`：
 ```python
 def _get_supported_file_loaders():
@@ -526,6 +531,7 @@ def _get_supported_file_loaders():
 - 动态库：ExtensionFileLoader
 - .py文件：SourceFileLoader
 - .pyc文件：SourcelessFileLoader
+
 ### SourceFileLoader
 这里先来看下`SourceFileLoader`的实现，这个`loader`处理的是只存在`.py`文件时的逻辑过程，在导入时首先调用的是`get_code`函数获取文件对应的模块`PyCodeObject`对象。由于`SourceFileLoader`继承了`SourceLoader`，因此实际最终调用的函数是在`SourceLoader`中实现的，具体实现如下：
 ```python
@@ -783,6 +789,7 @@ typedef struct {
    - 字段类型
    - 字段长度
    - 字段内容
+
 ### 关于字符串的处理
 在`Python3`中字符串有两种类型，一种是字节序列类型（`b'xxx'`），另一种则是字符类型。对于字节序列类型，处理起来比较简单：
 ```python
@@ -852,7 +859,7 @@ typedef struct {
 最后，结合`.pyc`文件的前三种数据，最终存储在文件中的格式如下图所示：
 > 注：long 代表 4 字节；byte 代表 1 字节；bytes 代表字节序列，由前置的 size 字段标识大小
 
-![image.png](/images/python_pycodeobject_sourcecode/pyc_content.png)
+![pyc_content.png](/images/python_pycodeobject_sourcecode/pyc_content.png)
 ## 解析 .pyc 文件
 从上面可以知道`.pyc`文件的文件内容，我们也可以直接使用相关函数进行解析读取，具体操作方式如下：
 ```python
