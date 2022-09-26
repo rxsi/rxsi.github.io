@@ -52,9 +52,13 @@ Python 是解释型语言吗？
 code.py 中的 Fun2 函数
 ```
 查看文件夹，可以看到在程序运行之后，创建了文件夹`__pycache__`和新文件`code.cpython-36.pyc`
+
 ![image.png](/images/python_pycodeobject_sourcecode/pyc_file.png)
+
 创建出来的`.pyc`文件，实际上就是一种编译后文件，当我们对某个文件进行`import`操作时，Python 就会为我们创建对应的`.pyc`文件，以备程序重复运行时使用。所以 Python 实际上是一种需要先编译后再运行的程序，这类似于 Java 语言，只不过 Python 的解释器同时充当了编译器和虚拟机的角色
+
 ![image.png](/images/python_pycodeobject_sourcecode/python_run.png)
+
 而之所以没有为 main.py 文件生成`.pyc`文件，是因为这是一个一次性的运行文件，Python 解释器不会为只可能运行一次的文件生成 pyc 文件
 后续再次导入`code.py`时，优先就会使用`.pyc`文件进行反序列化
 ## .pyc 文件内容
@@ -86,9 +90,13 @@ def Fun3():
 Fun3()
 ```
 双击运行重新生成的`.pyc`文件，就可以看到生成的控制台窗口了
+
 ![image.png](/images/python_pycodeobject_sourcecode/pyc_terminal.png)
+
 当程序识别到`.pyw`文件，系统会使用`pythonw.exe`程序运行，这屏蔽了代码中的`stdout`、`stderr`入口，因此就不会有消息输出到控制台了
+
 ![image.png](/images/python_pycodeobject_sourcecode/pyw_exe.png)
+
 ### .pyd 文件
 `.pyd`文件格式是通过 D 语言编译后生成的二进制文件，这种文件无法被反编译，因此安全性较高
 # PyCodeObject 对象
@@ -152,6 +160,7 @@ Python 的作用域一共有4种，分别是：
 - 局部名字空间：函数或类中定义的名字空间，包括了参数和局部定义的变量
 - 全局名字空间：模块定义的名字空间，包括了函数、类、其他模块导入的变量等
 - 内建名字空间：Python 内置的变量名称
+
 ## 字段解析
 以下面的代码为例，我们来探究下 **名字空间 **和`PyCodeObject`的对应关系
 ```python
