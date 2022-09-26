@@ -44,6 +44,7 @@ typedef struct redisDb {
 ```
 可以看到对于具有过期时间的键值对是会存放到一个独立的字典中，所以 Redis 可以高效的实现对键值对有效期管理
 以下图表示：
+
 ![redisdb.png](/images/redis_expire_delete_and_memory_elimination/redisdb.png)
 
 # 过期删除
@@ -175,6 +176,7 @@ Redis 对于 LFU 的实现依然只是沿用了`redisObject.lru`字段，将这`
 上面说了 Redis 为了避免`缓存污染`的问题，引入了 LFU 机制，而 MySQL 在淘汰脏页依据的则是改良过的 LRU 机制，他也能够有效的避免缓存污染问题。
 MySQL 在实际生产环境中，不可避免的会伴随有大规模的范围查询，像是预读机制或者是全表扫描等，这会一次性把大量数据加载到缓存中，如果直接使用原始的 LRU 机制，那么显而易见的会使**大量的热点数据被冷数据替换淘汰掉**，而后这些冷数据就又会被热数据重新替换，这就造成了一种低效的内存加载卸载循环。
 为了规避这点，MySQL 在实现`LRU List`中规定了一个`midpoint`位置，这个位置由配置项`innodb_old_blocks_pct`控制，默认是在链表尾部的**37%**处，根据这个位置，把整个 List 划分为了 Old 和 New 两个区域，如下图所示：
+
 ![mysql_lru.png](/images/redis_expire_delete_and_memory_elimination/mysql_lru.png)
 
 当数据被访问时，会被加载到`midpoint`位置，即 Old 区域的头部，并且在配置项`innodb_old_blocks_time`时间内，默认值是 1000ms，该数据被再次访问是不会将其转移到 New 区域的头部，而是要等到这个配置时间之后，如果数据还存在 Old 区域且再次被访问了那么说明这是一份热数据，才会被移动到 New 区域。通过这种设计，就可以有效的避免**缓存污染**问题了。
