@@ -117,7 +117,6 @@ mysql> explain select id from test_table;
 ```
 
 - range：范围查询，常见的关键字有：between，< , > , in 等，这个也会利用到索引，因此性能高于`index`
-
 比方说我们对索引进行`like`模糊查询时，如果查询形式为`select * from test_table where name like '林%'`，这样是可以利用到索引的，而且是就是范围查询。如果查询形式为`select * from test_table where name like '%林' 或者 like '%林%'`，这种则会直接使用全表查询
 ```sql
 mysql> explain select * from test_table where id in (3, 4);
