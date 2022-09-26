@@ -135,7 +135,7 @@ int tcp_connect(struct sock *sk)
 }
 ```
 可以看到在这个函数内，会构建`SYN`包，并将其传递给更下层的 IP 层进行发包，同时也会启动超时重传定时器，以初始超时时间为1，后续每秒都倍增。最大的重试次数是`tcp_syn_retries`，默认值为 **6 。**
-```c
+```shell
 rxsi@VM-20-9-debian:~$ cat /proc/sys/net/ipv4/tcp_syn_retries 
 6
 ```

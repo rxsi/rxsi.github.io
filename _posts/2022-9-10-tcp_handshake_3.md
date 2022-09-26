@@ -144,7 +144,7 @@ void tcp_finish_connect(struct sock *sk, struct sk_buff *skb)
 }
 ```
 当 TCP 空闲时长达到`tcp_keepalive_time（默认2小时）`后，将会开始进行探测，总探测次数为`tcp_keepalive_probes（默认9次）`，每次的探测间隔为`tcp_keepalive_intvl（默认75秒）`，因此在实际应用中，我们需要在应用层再自行添加一个保活机制。此外，单纯依赖于 TCP 层的保活机制并不能准确的反应出当前应用层的状态，比如应用层出于某些原因负载过高、CPU无法处理任务、线程池满了等，无法对业务进行响应，此时依赖于 TCP 自身是无法发现异常的，因此自行在应用层实现保活机制是有必要的。
-```c
+```shell
 rxsi@VM-20-9-debian:~$ cat /proc/sys/net/ipv4/tcp_keepalive_time 
 7200
 rxsi@VM-20-9-debian:~$ cat /proc/sys/net/ipv4/tcp_keepalive_intvl 
@@ -276,7 +276,7 @@ int tcp_rcv_state_process(struct sock *sk, struct sk_buff *skb)
 由于客户端此时已经接收到了`SYN-ACK`报文，因此成功进入了`ESTABLISHED`状态，然后会向服务端发送一个`ACK`报文，但是注意，**ACK 报文是不会重发的，因此当该报文丢失之后只能等待对方重发相应的报文再促使客户端下发 ACK 报文**。
 所以第三次握手包丢失，则会使服务端一直重发`SYN-ACK`报文，直到收到回复或者达到最大重传次数（`tcp_synack_retries（默认值是5）`）。
 如果服务端最终因为达到了最大重发次数而转为`CLOSED`状态，那么此时处于`ESTABLISHED`状态的客户端如果没有开启 keepalive 机制（连接空闲2小时之后，开始探测，每次间隔75秒，总共探测9次）者没有进行任何数据包的发送，那么客户端就会一直处于当前状态，直到进程关闭。否则则会由于心跳超时或者数据包重传达到上限而关闭连接，数据包的重传由以下两个参数控制：
-```c
+```shell
 rxsi@VM-20-9-debian:~$ cat /proc/sys/net/ipv4/tcp_retries1
 3
 rxsi@VM-20-9-debian:~$ cat /proc/sys/net/ipv4/tcp_retries2
