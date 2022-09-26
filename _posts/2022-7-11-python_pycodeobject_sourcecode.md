@@ -64,6 +64,7 @@ code.py 中的 Fun2 函数
 - 一个 4 字节的文件修改时间
 - 一个 4 字节的源文件大小
 - 一个经过序列化的 PyCodeObject 对象
+
 ## 其他后缀文件
 除了上面讲到的`.py`文件和`.pyc`文件，还有其他几种类型的文件
 ### .pyo 文件
@@ -73,6 +74,7 @@ code.py 中的 Fun2 函数
 - 默认无优化级别：`python -m py_compile code.py`，得到文件：`code.cpython-36.pyc`
 - 优化级别一：`python -O -m py_compile code.py`，得到文件：`code.cpython-36.opt-1.pyc`
 - 优化级别二：`python -OO -m py_compile code.py`，得到文件：`code.cpython-36.opt-2.pyc`
+
 ### .pyw 文件
 这个是专门为了 windows 环境下 GUI 开发而设计的模式。在 windows 环境下运行`.pyc`文件会弹出控制台窗口，这对 GUI 图形界面开发程序不美观
 我们原先生成的`code.cpython-36.pyc`中因为没有输出语句，因此直接运行是察觉不到控制台窗口的创建的，先加入以下测试代码
