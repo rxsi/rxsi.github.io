@@ -22,6 +22,10 @@ def Fun1():
 if __name__ == '__main__':
     Fun1()
 ```
+
+
+
+
 在命令行中，直接运行 main.py，输出如下：
 ```python
 >>> python main.py
