@@ -182,9 +182,9 @@ mysql> explain select * from test_table where id = (select min(id) from test_tab
 如果查询基于分区表，将会显示访问的是哪个区
 ### possible_keys
 可能用到的索引，当查询的字段的上有索引时即会列出，但不一定会使用到
-```sql
-##### key
+### key
 显示实际用到的索引，没有则为NULL
+```sql
 mysql> explain select * from test_table where id = 1;
 +----+-------------+------------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
 | id | select_type | table      | partitions | type  | possible_keys | key     | key_len | ref   | rows | filtered | Extra |
