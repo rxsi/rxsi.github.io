@@ -125,10 +125,12 @@ saga是一种适用于长活事务的模式，通过将长事务分解成多个�
 #### 恢复策略
 ##### 向前恢复
 ![saga_front_recovery.png](/images/distributed_transaction/saga_front_recovery.png)
+
 对于执行不成功的子事务，会一直重试执行事务
 
 ##### 向后恢复
 ![saga_back_recovery.png](/images/distributed_transaction/saga_back_recovery.png)
+
 对于执行不成功的子事务，按照已执行的子事务的你顺序进行回滚
 
 #### 应用场景
