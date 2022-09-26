@@ -800,9 +800,7 @@ typedef struct {
 ```
 对于字符类型的处理就比较复杂。字符对象的底层实现根据不同的字符串长度，有不同的底层编码对象格式，如下表所示
 
-| 
-
- | **maxchar < 128** | **maxchar < 256** | **maxchar < 65536** | **maxchar < MAX_UNICODE** |
+| | **maxchar < 128** | **maxchar < 256** | **maxchar < 65536** | **maxchar < MAX_UNICODE** |
 | --- | --- | --- | --- | --- |
 | **kind** | PyUnicode_1BYTE_KIND | PyUnicode_1BYTE_KIND | PyUnicode_2BYTE_KIND | PyUnicode_4BYTE_KIND |
 | **ascii** | 1 | 0 | 0 | 0 |
