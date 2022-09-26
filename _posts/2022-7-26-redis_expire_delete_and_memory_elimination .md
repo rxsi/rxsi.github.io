@@ -11,6 +11,7 @@ author: Rxsi
 {:toc}
 
 # Redis 架构
+先从 Redis 架构入手看下在系统底层是如何管理过期键值对的
 ## redisServer
 当我们启动 Redis 时，会创建一个`redisServer`结构体，保存了当前服务器的信息，以及当前所有的数据库信息
 ```c
@@ -25,7 +26,7 @@ struct redisServer {
 Redis 默认的数据库数量是`16`个，在配置`redis/redis.conf`中可进行配置修改
 可以通过下面这张图表示：
 
-![image.png](/images/redis_expire_delete_and_memory_elimination/dbnum.png)
+![dbnum.png](/images/redis_expire_delete_and_memory_elimination/dbnum.png)
 > 注：Redis 数据库是无法指定名字的，只能根据数组下标表示，通过 SELECT xx 的方式进行切换，默认连接数据库是 0 号数据库
 <!--more-->
 
@@ -40,8 +41,9 @@ typedef struct redisDb {
     // ...
 } redisDb;
 ```
-### 示例
-![image.png](/images/redis_expire_delete_and_memory_elimination/redisdb.png)
+可以看到对于具有过期时间的键值对是会存放到一个独立的字典中，所以 Redis 可以高效的实现对键值对有效期管理
+以下图表示：
+![redisdb.png](/images/redis_expire_delete_and_memory_elimination/redisdb.png)
 # 过期删除
 ## 设置过期时间
 Redis 支持直接对某个已经存在的 key 进行过期时间的设定，有以下 4 个命令：
@@ -77,7 +79,7 @@ persist <key> // 取消 key 的过期时间
 从上面的介绍我们知道，键的过期时间保存在`redisDb.expire`字段中，是一个`dict`结构。
 当客户端要读取键值对时，流程如下：
 
-![image.png](/images/redis_expire_delete_and_memory_elimination/read_expire.png)
+![read_expire.png](/images/redis_expire_delete_and_memory_elimination/read_expire.png)
 ## 过期删除策略
 ### 惰性删除
 当 key 过期时，不主动删除该过期的 key，而是等待下一次对该 key 进行读写时，判断到该 key 已过期后再进行删除
@@ -99,7 +101,7 @@ Redis 为了避免长期阻塞线程，限定了上述的删除流程最多只�
 在 64 位系统中，该值默认是`0`，即永远不进行内存淘汰
 在 32 位系统中，该值默认是`3G`，这是因为 32 位系统最大内存也就 4G
 ## 内存淘汰策略
-
+Redis 支持设置不同的淘汰策略，有以下几种：
 1. noeviction：
 
 不进行内存淘汰，Redis3.0 之后**默认的淘汰策略**，即当运行内存超过最大设置内存时也不淘汰任何数据，而是直接不提供服务。这种策略考虑是任何情况下的内存淘汰都会是对已有数据的篡改，因此为了避免进一步引发不可预期的错误，直接停止服务更加安全
@@ -155,12 +157,18 @@ Redis 实现的 LRU 策略虽然占用更少的内存，但是也仍然无法处
 全称为最近最不常用规则，会根据数据的访问频率来淘汰数据，核心思想是”如果数据过去被多次访问，那么将来被访问的概率也会更高“
 Redis 对于 LFU 的实现依然只是沿用了`redisObject.lru`字段，将这`24bits`的字段分为了两段存储，高`16bits`存储上次**访问的时间**（ldt），后`8`位记录**访问的频次**（logc）
 
-![](/images/redis_expire_delete_and_memory_elimination/lru_bits.png)
+![lru_bits.png](/images/redis_expire_delete_and_memory_elimination/lru_bits.png)
 ##### logc的设计
-对于每个新键的 可以，该值默认为`5`，且**该值会随时间推移而衰减**
-每当 key 被访问，先根据已保存的`ldt`和当前时间戳计算衰减值，对`logc`值进行衰减。当上一次访问时间和本次访问时间间隔越大，则衰减幅度越大，这样即实现了根据`**访问频次**`来淘汰数据，而非单纯的访问次数。
-当衰减操作完成之后，再根据`**一定概率**`对`logc`进行增长，且该值越大，增长概率越低
+对于每个新键的 key，该值默认为`5`，且**该值会随时间推移而衰减**
+每当 key 被访问，先根据已保存的`ldt`和当前时间戳计算衰减值，对 logc 值进行衰减。当上一次访问时间和本次访问时间间隔越大，则衰减幅度越大，这样即实现了根据**访问频次**来淘汰数据，而非单纯的访问次数。
+当衰减操作完成之后，再根据**一定概率**对 logc 进行增长，且该值越大，增长概率越低，这样可以使旧热 key 保持一个相对稳定的 logc 值，而不会与新加入的热 key 存在过大的差距，造成新热 key 无法驻留的问题。
 在`redis.conf`中，由以下参数进行配置：
 
 - `lfu-decay-time`：衰减时间系数，这是一个以分钟为单位的数值，默认为 1，即代表每 1 分钟衰减一次。该值越大，衰减越慢
 - `lfu-log-factor`：调整增长的速度，该值越大，则增长越慢
+#### LRU 的其他设计
+上面说了 Redis 为了避免`缓存污染`的问题，引入了 LFU 机制，而 MySQL 在淘汰脏页依据的则是改良过的 LRU 机制，他也能够有效的避免缓存污染问题。
+MySQL 在实际生产环境中，不可避免的会伴随有大规模的范围查询，像是预读机制或者是全表扫描等，这会一次性把大量数据加载到缓存中，如果直接使用原始的 LRU 机制，那么显而易见的会使**大量的热点数据被冷数据替换淘汰掉**，而后这些冷数据就又会被热数据重新替换，这就造成了一种低效的内存加载卸载循环。
+为了规避这点，MySQL 在实现`LRU List`中规定了一个`midpoint`位置，这个位置由配置项`innodb_old_blocks_pct`控制，默认是在链表尾部的**37%**处，根据这个位置，把整个 List 划分为了 Old 和 New 两个区域，如下图所示：
+![mysql_lru.png](/images/redis_expire_delete_and_memory_elimination/mysql_lru.png)
+当数据被访问时，会被加载到`midpoint`位置，即 Old 区域的头部，并且在配置项`innodb_old_blocks_time`时间内，默认值是 1000ms，该数据被再次访问是不会将其转移到 New 区域的头部，而是要等到这个配置时间之后，如果数据还存在 Old 区域且再次被访问了那么说明这是一份热数据，才会被移动到 New 区域。通过这种设计，就可以有效的避免**缓存污染**问题了。
