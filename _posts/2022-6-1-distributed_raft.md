@@ -173,7 +173,7 @@ author: Rxsi
 
 1. 判断 leader_term 与 cur_term 的关系
 - leader_term < cur_term：证明对方 leader 已经过期，返回 `False`状态，及其他响应参数，leader 接收到消息之后会转换身份为 follower
-- leader_term > cur_term || 本身节点正处于 candidate || 首次接收到该新 leader 消息的 follower：转换身份为 follower 并更新 term 信息，同时保存 leader 信息
+- leader_term > cur_term 或 本身节点正处于 candidate 或 首次接收到该新 leader 消息的 follower：转换身份为 follower 并更新 term 信息，同时保存 leader 信息
 
 2. 重置周期为`心跳超时时间`定时器，这里表现出的作用是**抑制新选举周期的开启**
 3. 判断 pre_log_index 和 pre_log_term 的关系
@@ -263,7 +263,7 @@ _上面计算出的新的 next_index 要与当前已有的 next_index 作比较�
 
 1. 判断 leader_term 与 cur_term 的关系
 - leader_term < cur_term：证明对方 leader 已经过期，返回 `False`状态，及其他响应参数，leader 接收到消息之后会转换身份为 follower
-- leader_term > cur_term || 本身节点正处于 candidate || 首次接收到该新 leader 消息的 follower：转换身份为 follower 并更新 term 信息，同时保存 leader 信息
+- leader_term > cur_term 或 本身节点正处于 candidate 或 首次接收到该新 leader 消息的 follower：转换身份为 follower 并更新 term 信息，同时保存 leader 信息
 
 2. 如果本节点 snap_index < leader_snap_index：复制 leader 的 snapshot，并更新`snpa_index、snap_term、apply_index、commit_index`，并将 snapshot 写入覆盖上层状态机数据
 
