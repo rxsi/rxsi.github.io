@@ -99,7 +99,7 @@ author: Rxsi
    - 如果本节点已经投过票，返回本节点的 term 并投反对票，因为在同一任期内只能投票一次。注意一点有可能节点会收到同一个 candidate 的同一个任期的投票 RPC，比如当网络出现延迟时，这里的处理方法可以是任一方的去重过滤
    
 3. 对比日志消息：
-   - 如果 candidate_log_term > cur_log_term ||（candidate_term == cur_log_term && candidate_log_index >= cur_log_index)：说明在同任期下对方日志更新，可以投票给他。设置本节点的已投票信息为对方节点信息，返回本节点的 term 并投赞成票
+   - 如果 candidate_log_term > cur_log_term 或（candidate_term == cur_log_term && candidate_log_index >= cur_log_index)：说明在同任期下对方日志更新，可以投票给他。设置本节点的已投票信息为对方节点信息，返回本节点的 term 并投赞成票
    - 否则对方日志不是最新的，返回本节点的 term 并投返回票，这确保了选举出的节点一定具有最新的日志
 
 #### candidate 接收到投票反馈
