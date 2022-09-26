@@ -10,9 +10,7 @@ author: Rxsi
 * content
 {:toc}
 
-## 分布式事务
-
-### 分布式事务的原则
+## 分布式事务的原则
 在单机事务中，我们可以满足 **ACID** 特性。
 
 - Atomic（原子性）：InnoDb中通过undo-log保证
