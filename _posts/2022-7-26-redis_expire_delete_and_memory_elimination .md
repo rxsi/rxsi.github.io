@@ -27,10 +27,7 @@ Redis 默认的数据库数量是`16`个，在配置`redis/redis.conf`中可进�
 
 ![image.png](/images/redis_expire_delete_and_memory_elimination/dbnum.png)
 > 注：Redis 数据库是无法指定名字的，只能根据数组下标表示，通过 SELECT xx 的方式进行切换，默认连接数据库是 0 号数据库
-
-
-
-
+<!--more-->
 
 ## redisDb
 从上面可以知道每个数据库对应的是`redisDb`结构体，该结构体的定义如下：
