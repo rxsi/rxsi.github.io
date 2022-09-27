@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Mysql InnoDB特性
-date: 2022-8-5 15:12:21 +0800
+date: 2021-12-23 15:12:21 +0800
 categories: MySQL
 tags: mysql innodb 
 author: Rxsi
