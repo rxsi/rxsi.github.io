@@ -15,7 +15,7 @@ author: Rxsi
 
 #### files_struct
 ```c
-struct files_struct {  
+struct files_struct { 
 	...
 	struct fdtable  *fdt;  
 	struct fdtable  fdtab;  
