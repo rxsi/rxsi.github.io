@@ -10,7 +10,7 @@ author: Rxsi
 * content
 {:toc}
 
-#### 算法构成
+### 算法构成
 主要分为两步，find查找 和 union合并
 其中在find的过程中可以进行路径的压缩，在union的过程中可以利用size数组统计当前树的节点数，从而实现把节点数少的树合并到节点数多的树
 <!--more-->
@@ -55,7 +55,7 @@ void union(int x, int y)
 }
 ```
 
-#### 应用
+### 应用
 LeetCode_721：账户合并
 ```cpp
 class Solution {
