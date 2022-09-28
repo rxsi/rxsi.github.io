@@ -123,7 +123,6 @@ if (clientfd == -1){
             }
         }
     }
-
     fd_set writeset;
     FD_ZERO(&writeset);
     FD_SET(clientfd, &writeset);
@@ -135,7 +134,6 @@ if (clientfd == -1){
         close(clientfd);
         return -1;
     }
-
     // 补充判断阶段:
     int err;
     socklen_t len = static_cast<socklen_t>(sizeof(err));
@@ -143,7 +141,6 @@ if (clientfd == -1){
         close(clientfd);
         return -1;
     }
-
     if (err == 0){
         std::cout << "connect to server successfully." << std::endl;
     } else{
@@ -187,8 +184,6 @@ if (clientfd == -1){
         }
     }
     close(clientfd);
-
-
     // 发送函数
     bool SendData(int fd, const char* buf, int buf_len, int flag = 0){
         int send_len = 0;
@@ -231,7 +226,6 @@ if (clientfd == -1){
     ```c
     char buf[32] = {0}; 
     int ret = recv(clientfd, buf, 32, 0); // 当没有接收到数据时,会阻塞在这里
-
     if (ret > 0){
         std::cout << "recv successfully." << std::endl;
     } else{
