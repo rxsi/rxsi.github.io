@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 哈希
+title: hash
 date: 2021-12-4 13:43:55 +0800
 categories: 数据结构与算法
-tags: 哈希
+tags: hash
 author: Rxsi
 ---
 
