@@ -30,7 +30,7 @@ def floyd(graph):
     dist = copy.deepcopy(graph)
     for k in range(len(graph)): 
         for i in range(len(graph)):
-            if dist[i][k] == INF: # 剪枝
+            if dist[i][k] == INF: # 剪枝
                 continue
             for j in range(len(graph)):
                 if dist[k][j] == INF: # 剪枝
