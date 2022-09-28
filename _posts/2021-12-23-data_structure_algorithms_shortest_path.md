@@ -23,26 +23,26 @@ author: Rxsi
 
 Python版本：
 ```python
-import copy
-import time
+import copy
+import time
 
 def floyd(graph):
-    dist = copy.deepcopy(graph)
-    for k in range(len(graph)): 
-        for i in range(len(graph)):
-            if dist[i][k] == INF: # 剪枝
+    dist = copy.deepcopy(graph)
+    for k in range(len(graph)): 
+        for i in range(len(graph)):
+            if dist[i][k] == INF: # 剪枝
                 continue
-            for j in range(len(graph)):
-                if dist[k][j] == INF: # 剪枝
+            for j in range(len(graph)):
+                if dist[k][j] == INF: # 剪枝
                     continue
-                dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]) 
+                dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]) 
     return dist
                 
-INF = float('inf')
-graph = [[0, 5, INF, 10],
-        [INF, 0, 3, INF],
-        [INF, INF, 0,   1],
-        [INF, INF, INF, 0]
+INF = float('inf')
+graph = [[0, 5, INF, 10],
+        [INF, 0, 3, INF],
+        [INF, INF, 0, 1],
+        [INF, INF, INF, 0]
         ]
 floyd(graph)
 ```
@@ -141,35 +141,35 @@ int main()
 
 Python版本：
 ```python
-INF = float('inf')
-def dijkstra(point, graph):
-    dist = list.copy(graph[point]) # point对应的点将会是0,dist中保存的是指定点到其他各点的直接距离
-    check_dist = [False] * len(graph) # 统计已经确定的点
-    check_dist[point] = True
-    for i in range(len(graph)-1):
-    min_index = findminindex(dist, check_dist) # 每次贪心的选择最短距离点
-    if min_index == INF: # 此路不通...
+INF = float('inf')
+def dijkstra(point, graph):
+    dist = list.copy(graph[point]) # point对应的点将会是0,dist中保存的是指定点到其他各点的直接距离
+    check_dist = [False] * len(graph) # 统计已经确定的点
+    check_dist[point] = True
+    for i in range(len(graph)-1):
+        min_index = findminindex(dist, check_dist) # 每次贪心的选择最短距离点
+    if min_index == INF: #此路不通...
         break
-    check_dist[min_index] = True
-    for v in range(len(graph)): # 以当前最短距离点为起始,更新dist中还未确定且原始指定点到该点的距离(dist[v])大于从原始指定点到当前最短距离点+当前最短距离点到该点的距离(dist[min_index]+graph[min_index][v])
-        if check_dist[v] == False and graph[min_index][v] != INF and dist[v] > dist[min_index] + graph[min_index][v]:
-            dist[v] = dist[min_index] + graph[min_index][v]
-    return dist
+    check_dist[min_index] = True
+    for v in range(len(graph)): # 以当前最短距离点为起始,更新dist中还未确定且原始指定点到该点的距离(dist[v])大于从原始指定点到当前最短距离点+当前最短距离点到该点的距离(dist[min_index]+graph[min_index][v])
+        if check_dist[v] == False and graph[min_index][v] != INF and dist[v] > dist[min_index] + graph[min_index][v]:
+            dist[v] = dist[min_index] + graph[min_index][v]
+    return dist
 
-def findminindex(dist, check_dist):
-    temp_min = INF
-    min_index = INF
-    for index in range(len(dist)):
-        if dist[index] < temp_min and check_dist[index] == False:
-            temp_min = dist[index]
-            min_index = index
-    return min_index
-graph = [[0, 5, INF, 10],
-        [INF, 0, 3, INF],
-        [INF, INF, 0,   1],
-        [INF, INF, INF, 0]
+def findminindex(dist, check_dist):
+    temp_min = INF
+    min_index = INF
+    for index in range(len(dist)):
+        if dist[index] < temp_min and check_dist[index] == False:
+            temp_min = dist[index]
+            min_index = index
+    return min_index
+graph = [[0, 5, INF, 10],
+        [INF, 0, 3, INF],
+        [INF, INF, 0, 1],
+        [INF, INF, INF, 0]
         ]
-dijkstra(0, graph)
+dijkstra(0, graph)
 
 
 # 使用优先队列优化:
@@ -295,7 +295,7 @@ public:
 算法的思想很简单就是直接遍历所有可能的点进行松弛操作，假设有N个点，E条边，则最终算法的时间复杂度为O(NE)，效率不高，但是可以处理负权边
 要判断负权环，只需要在上面遍历完成之后更遍历一次，如果有任意一条边发生了更新，则说明有负权环。
 
-```C++
+```cpp
 #include <iostream>
 #include <vector>
 #include <limits.h>
@@ -370,7 +370,7 @@ int main()
 #### spfa
 在 bellman_ford 算法中，每次都需要遍历所有的边，但是实际上只有在上次的relax中发生了变化的边才会导致其他边发生变化，
 因此可以使用队列（先进先出）记录上次变化的边，这样就可以提升速度了。
-```C++
+```cpp
 #include <iostream>
 #include <queue>
 #include <vector>
