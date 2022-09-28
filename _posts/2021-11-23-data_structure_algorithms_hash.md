@@ -50,13 +50,13 @@ static const unsigned long __stl_prime_list[__stl_num_primes] ={
 fi(key) = (f(key) + di) MOD m (di = 0,1,2,3,4....,m-1)
 ```
 如下表所示，哈希表的长度为12，已被占用 5 个位置：
-![hash1.png](/images/data_algorithm_hash/hash1.png)
+![hash1.png](/images/data_structure_algorithms_hash/hash1.png)
 当计算 key = 25 时，假设计算得到的值是`f(25) = 5`，该位置已经被另外的数占用了，因此我们应用上面的公式重新计算得到`f(25) = (f(25) + 1) mod 12 = 6`，所以 25 存入下标为 6 的位置。
 > Python 字典使用的就是这种方式去解决哈希冲突。
 
 #### 二次探测法
 假设上表已填充的数如下：
-![hash2.png](/images/data_algorithm_hash/hash2.png)
+![hash2.png](/images/data_structure_algorithms_hash/hash2.png)
 当计算 key = 35 时，如果计算到的值是`f(35) = 5`，那么如果按照线性探测法，那么会逐个往后查找，从当前表的数据可以看出将会连续探测 5 个位置之后才会找到空位，而实际上位置 5 的左边实际就有空位。因此二次探测法改进了探测方法：
 ```c
 fi(key) = (f(key) + di) MOD m (di = 1^2, -1^2, 2^2, -2^2, ...q^2, -q^2 q<=m/2)
