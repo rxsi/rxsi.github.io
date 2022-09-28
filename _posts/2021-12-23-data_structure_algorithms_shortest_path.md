@@ -27,23 +27,23 @@ import copy
 import time
 
 def floyd(graph):
-    dist = copy.deepcopy(graph)
-    for k in range(len(graph)): 
-        for i in range(len(graph)):
-            if dist[i][k] == INF: # 剪枝
-                continue
-            for j in range(len(graph)):
-                if dist[k][j] == INF: # 剪枝
-                    continue
-                dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]) 
+    dist = copy.deepcopy(graph)
+    for k in range(len(graph)): 
+        for i in range(len(graph)):
+            if dist[i][k] == INF: # 剪枝
+                continue
+            for j in range(len(graph)):
+                if dist[k][j] == INF: # 剪枝
+                    continue
+                dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]) 
     return dist
                 
 INF = float('inf')
 graph = [[0, 5, INF, 10],
-         [INF, 0, 3, INF],
-         [INF, INF, 0,   1],
-         [INF, INF, INF, 0]
-         ]
+        [INF, 0, 3, INF],
+        [INF, INF, 0,   1],
+        [INF, INF, INF, 0]
+        ]
 floyd(graph)
 ```
 
@@ -143,32 +143,32 @@ Python版本：
 ```python
 INF = float('inf')
 def dijkstra(point, graph):
-    dist = list.copy(graph[point]) # point对应的点将会是0,dist中保存的是指定点到其他各点的直接距离
-    check_dist = [False] * len(graph) # 统计已经确定的点
-    check_dist[point] = True
-    for i in range(len(graph)-1):
-        min_index = findminindex(dist, check_dist) # 每次贪心的选择最短距离点
-        if min_index == INF: # 此路不通...
-            break
-        check_dist[min_index] = True
-        for v in range(len(graph)): # 以当前最短距离点为起始,更新dist中还未确定且原始指定点到该点的距离(dist[v])大于从原始指定点到当前最短距离点+当前最短距离点到该点的距离(dist[min_index]+graph[min_index][v])
-            if check_dist[v] == False and graph[min_index][v] != INF and dist[v] > dist[min_index] + graph[min_index][v]:
-                dist[v] = dist[min_index] + graph[min_index][v]
-    return dist
+    dist = list.copy(graph[point]) # point对应的点将会是0,dist中保存的是指定点到其他各点的直接距离
+    check_dist = [False] * len(graph) # 统计已经确定的点
+    check_dist[point] = True
+    for i in range(len(graph)-1):
+    min_index = findminindex(dist, check_dist) # 每次贪心的选择最短距离点
+    if min_index == INF: # 此路不通...
+        break
+    check_dist[min_index] = True
+    for v in range(len(graph)): # 以当前最短距离点为起始,更新dist中还未确定且原始指定点到该点的距离(dist[v])大于从原始指定点到当前最短距离点+当前最短距离点到该点的距离(dist[min_index]+graph[min_index][v])
+        if check_dist[v] == False and graph[min_index][v] != INF and dist[v] > dist[min_index] + graph[min_index][v]:
+            dist[v] = dist[min_index] + graph[min_index][v]
+    return dist
 
 def findminindex(dist, check_dist):
-    temp_min = INF
-    min_index = INF
-    for index in range(len(dist)):
-        if dist[index] < temp_min and check_dist[index] == False:
-            temp_min = dist[index]
-            min_index = index
-    return min_index
+    temp_min = INF
+    min_index = INF
+    for index in range(len(dist)):
+        if dist[index] < temp_min and check_dist[index] == False:
+            temp_min = dist[index]
+            min_index = index
+    return min_index
 graph = [[0, 5, INF, 10],
-         [INF, 0, 3, INF],
-         [INF, INF, 0,   1],
-         [INF, INF, INF, 0]
-         ]
+        [INF, 0, 3, INF],
+        [INF, INF, 0,   1],
+        [INF, INF, INF, 0]
+        ]
 dijkstra(0, graph)
 
 
