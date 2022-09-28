@@ -104,7 +104,6 @@ if (clientfd == -1){
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS); // 解析服务端ip地址
     serveraddr.sin_port = htons(SERVER_PORT);
-
     while (true){
         int ret = connect(clientfd, (sockaddr*)&serveraddr, sizeof(serveraddr));
         if (ret == 0){
