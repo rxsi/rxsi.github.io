@@ -299,7 +299,8 @@ inline _ForwardIter
 
 template <class _InputIter, class _ForwardIter, class _Tp>
 inline _ForwardIter
-/*利用__type_traits判断该型别是否为POD型别*/__uninitialized_copy(_InputIter __first, _InputIter __last,
+/*利用__type_traits判断该型别是否为POD型别*/
+__uninitialized_copy(_InputIter __first, _InputIter __last,
                      _ForwardIter __result, _Tp*){
   typedef typename __type_traits<_Tp>::is_POD_type _Is_POD;
   return __uninitialized_copy_aux(__first, __last, __result, _Is_POD());}
@@ -362,8 +363,7 @@ __uninitialized_fill_aux(_ForwardIter __first, _ForwardIter __last,
   }
   __STL_UNWIND(_Destroy(__first, __cur));}
 
-template <class _ForwardIter, class _Tp, class _Tp1>//用__type_traits技术判断该型别是否
-为POD型别
+template <class _ForwardIter, class _Tp, class _Tp1>//用__type_traits技术判断该型别是否为POD型别
 inline void __uninitialized_fill(_ForwardIter __first, 
                                  _ForwardIter __last, const _Tp& __x, _Tp1*){
   typedef typename __type_traits<_Tp1>::is_POD_type _Is_POD;
