@@ -210,9 +210,8 @@ private:
     bool _isValid(const Map&, int, int);
     int _calH(int, int, int, int);
     int _calG(const Map&, int, int, int);
-    static int D; // 直线运动的代价
-    static int DD; // 斜线运动的代价
-    static vector<pair<int, int>> path;
+    static const int D = 10; // 直线运动的代价
+    static const int DD = 14; // 斜线运动的代价
     int _maxX; // 当前地图X的最大值
     int _maxY; // 当前地图Y的最大值
 
@@ -235,18 +234,6 @@ private:
     };
 };
 
-int aStar::D = 10;
-int aStar::DD = 14;
-vector<pair<int, int>> aStar::path{
-    /*
-    搜索节点周围的点
-    按照八个方位搜索
-    (x-1,y-1)(x-1,y)(x-1,y+1)
-    (x  ,y-1)(x  ,y)(x  ,y+1)
-    (x+1,y-1)(x+1,y)(x+1,y+1)
-    */
-    {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1} // 前四个方向是直线，后四个是斜线
-};
 
 bool aStar::_isValid(const Map& map, int x, int y)
 {
@@ -276,9 +263,19 @@ int aStar::_calG(const Map& map, int dest_x, int dest_y, int weight)
 
 vector<pair<int, int>> aStar::search(const Map& map, int start_x, int start_y, int end_x, int end_y)
 {
+    static vector<pair<int, int>> path{
+        /*
+        搜索节点周围的点
+        按照八个方位搜索
+        (x-1,y-1)(x-1,y)(x-1,y+1)
+        (x  ,y-1)(x  ,y)(x  ,y+1)
+        (x+1,y-1)(x+1,y)(x+1,y+1)
+        */
+        {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1} // 前四个方向是直线，后四个是斜线
+    };
     _maxX = map.size();
     _maxY = map[0].size();
-    if (!_isValid(map, start_x, start_y) or !_isValid(map, end_x, end_y)) // 起始/终点坐标异常
+    if (!_isValid(map, start_x, start_y) || !_isValid(map, end_x, end_y)) // 起始/终点坐标异常
     {
         return {};
     }
@@ -294,7 +291,7 @@ vector<pair<int, int>> aStar::search(const Map& map, int start_x, int start_y, i
     {
         Node* parentNode = Que.top();
         Que.pop();
-        if (parentNode->close) continue; // 过滤重复
+        if (parentNode->close) continue;
         parentNode->close = true;
         if (parentNode->x == end_x && parentNode->y == end_y)
         {
@@ -304,7 +301,7 @@ vector<pair<int, int>> aStar::search(const Map& map, int start_x, int start_y, i
                 parentNode = parentNode->parent;
             }
             ret.emplace_back(parentNode->x, parentNode->y);
-            // 内存释放，在实际项目工程中可以预先创建一定数量的node节点，然后每次申请节点只返回其中未被使用的节点，用完之后清除状态数据（x\y\close等），不用释放，这样是空间换时间
+            // 内存释放
             for (auto iter = nodeMap.begin(); iter != nodeMap.end(); ++iter) delete iter->second;
             return ret;
         }
@@ -377,6 +374,9 @@ int main()
     }
     cout << endl;
 }
+/*
+输出：(1, 1) => (1, 2) => (2, 3) => (2, 4) => (2, 5) => (2, 6) => (2, 7) => (3, 8) => (4, 7) => (5, 8)
+*/
 ```
 
 ## JPS （TODO）
