@@ -3,7 +3,7 @@ layout: post
 title: 最短路径
 date: 2021-12-10 14:41:00 +0800
 categories: 数据结构与算法
-tags: dijkstra floyd bellman-ford spfa 数据结构 算法
+tags: Dijkstra Floyd Bellman-Ford spfa 数据结构 算法
 author: Rxsi
 ---
 
