@@ -28,7 +28,7 @@ Python版本：
 ```python
 import random
 def shuffle(nums):
-    for i in range(len(nums)-1, -1, -1):    
+    for i in range(len(nums)-1, -1, -1):
         j = random.randint(0, i) # [0, i]范围
         nums[i], nums[j] = nums[j], nums[i]
 ```
@@ -80,7 +80,7 @@ int main()
 2. i为在 >m 时进入的池子，且最后留在池子的概率：
     如果 i = m+1，那么能够成功进入池子的概率为 m/(m+1)，即 m/i；
     后面每次不被替换的概率为：1-1/(i+1), 1-1/(i+2) .... 1-(1/n)，因此最后的总概率为：
-    
+
     ![better_than_m.png](/images/data_structure_algorithms_shuffle/better_than_m.png)
 
 Python版本：

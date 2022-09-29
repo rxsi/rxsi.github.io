@@ -175,6 +175,7 @@ mysql> explain select * from test_table where id = (select min(id) from test_tab
 +----+-------------+------------+------------+-------+---------------+---------+---------+-------+------+----------+------------------------------+
 2 rows in set, 1 warning (0.00 sec)
 ```
+
 ### table
 当前查询的表
 ### partitions

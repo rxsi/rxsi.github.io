@@ -395,7 +395,7 @@ int main()
         a.join();
         b.join();
         c.join();
-    }  
+    }
 }
 ```
 #### memory_order_seq_cst
