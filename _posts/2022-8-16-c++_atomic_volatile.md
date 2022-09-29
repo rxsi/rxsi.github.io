@@ -118,15 +118,15 @@ int a;
 int b;
 int main()
 {
-     a = b + 1;
-     b = 0;
- }
+    a = b + 1;
+    b = 0;
+}
  
  // 转换后的汇编码如下：
-mov     eax, DWORD PTR b[rip]
-mov     DWORD PTR b[rip], 0 //先计算了b=0,发生了重排
-add     eax, 1
-mov     DWORD PTR a[rip], eax
+mov     eax, DWORD PTR b[rip]
+mov     DWORD PTR b[rip], 0 //先计算了b=0,发生了重排
+add     eax, 1
+mov     DWORD PTR a[rip], eax
 ```
 示例2：其中一个值为volatile类型
 ```cpp
@@ -134,15 +134,15 @@ int a;
 volatile int b;
 int main()
 {
-     a = b + 1;
-     b = 0;
+    a = b + 1;
+    b = 0;
  }
  
  // 转换后的汇编码如下：
-mov     eax, DWORD PTR b[rip] // 依然会发生重排,即证明单个属性变量声明为volatile是无用的
-mov     DWORD PTR b[rip], 0
-add     eax, 1
-mov     DWORD PTR a[rip], eax
+mov     eax, DWORD PTR b[rip] // 依然会发生重排,即证明单个属性变量声明为volatile是无用的
+mov     DWORD PTR b[rip], 0
+add     eax, 1
+mov     DWORD PTR a[rip], eax
 ```
 示例3：两个值都是volatile类型
 ```cpp
@@ -150,16 +150,16 @@ volatile int a;
 volatile int b;
 int main()
 {
-     a = b + 1;
-     b = 0;
+    a = b + 1;
+    b = 0;
  }
  
  // 转换后的汇编码如下：
-mov     eax, DWORD PTR b[rip]
-add     eax, 1 // 可见没有发生重排
-mov     DWORD PTR a[rip], eax
-xor     eax, eax
-mov     DWORD PTR b[rip], 0
+mov     eax, DWORD PTR b[rip]
+add     eax, 1 // 可见没有发生重排
+mov     DWORD PTR a[rip], eax
+xor     eax, eax
+mov     DWORD PTR b[rip], 0
 ```
 **结论：volatile可以在同为volatile变量之间抑制编译器重排**
 
@@ -168,7 +168,7 @@ mov     DWORD PTR b[rip], 0
 ```cpp
 int main()
 {
-    int a = 5;
+    int a = 5;
 }
 
 // 转换后的汇编码如下：
@@ -178,12 +178,12 @@ xor     eax, eax // 因为a值并没有调用，编译器直接优化掉了
 ```cpp
 int main()
 {
-    volatile int a = 5;
+    volatile int a = 5;
 }
 
 // 转换后的汇编码如下：
-mov     DWORD PTR [rsp-4], 5 // 未被优化掉,依然是将立即数$0x5压入栈中(rsp是栈顶指针,栈内存是由高往地变化,因此是-0x4,即4字节)
-xor     eax, eax
+mov     DWORD PTR [rsp-4], 5 // 未被优化掉,依然是将立即数$0x5压入栈中(rsp是栈顶指针,栈内存是由高往地变化,因此是-0x4,即4字节)
+xor     eax, eax
 ```
 **结论：可通过volatile修饰一些不想要编译器优化的语句**
 
@@ -193,16 +193,16 @@ xor     eax, eax
 #include <iostream>
 int fun(int num)
 {
-    return num + 1;
+    return num + 1;
 }
 int main()
 {
-    int a = 1;
-    int c;
-    std::cin >> c;
-    a = fun(c);
-    int b = a + 1;  // lea     esi, [rbx+1]，直接从寄存器读取a值然后+1
-    std::cout << b << std::endl;
+    int a = 1;
+    int c;
+    std::cin >> c;
+    a = fun(c);
+    int b = a + 1;  // lea     esi, [rbx+1]，直接从寄存器读取a值然后+1
+    std::cout << b << std::endl;
 }
 ```
 示例2：volatile变量
@@ -210,17 +210,17 @@ int main()
 #include <iostream>
 int fun(int num)
 {
-    return num + 1;
+    return num + 1;
 }
 int main()
 {
-    volatile int a = 1;
-    int c;
-    std::cin >> c;
-    a = fun(c);
-    int b = a + 1;  // mov     esi, DWORD PTR [rsp+4]
-                        // add     esi, 1 先从内存中读取最新值，然后再+1
-    std::cout << b << std::endl;
+    volatile int a = 1;
+    int c;
+    std::cin >> c;
+    a = fun(c);
+    int b = a + 1;  // mov     esi, DWORD PTR [rsp+4]
+                   // add     esi, 1 先从内存中读取最新值，然后再+1
+    std::cout << b << std::endl;
 }
 ```
 **结论：volatile修饰的变量每次修改后都会从寄存器中刷回内存，每次读取都会从内存读取最新值**
@@ -246,25 +246,25 @@ std::atomic<int> cnt(0); // 这种是直接初始化，调用的是类对应的�
 // int cnt; // 这种是默认初始化，对于函数之外的内置变量初始化值为0,多线程同时修改时线程不安全
 void f()
 {
-    for (int n = 0; n < 1000; ++n)
-    {
-        // cnt++; // 这也是保证了原子性，因为atomic有重载operator++ 和 operator--，但是默认的内存序是 memory_order_seq_cst（最严格），在此处只需要保证当前++操作的原子性，因此使用memory_order_relaxed即可
-        cnt.fetch_add(1, std::memory_order_relaxed); // memory_order_relaxed只保证当前语句的原子性,不保证其他store\load之间的顺序
-    }
+    for (int n = 0; n < 1000; ++n)
+    {
+        // cnt++; // 这也是保证了原子性，因为atomic有重载operator++ 和 operator--，但是默认的内存序是 memory_order_seq_cst（最严格），在此处只需要保证当前++操作的原子性，因此使用memory_order_relaxed即可
+        cnt.fetch_add(1, std::memory_order_relaxed); // memory_order_relaxed只保证当前语句的原子性,不保证其他store\load之间的顺序
+    }
 }
 int main()
 {
-    std::vector<std::thread> v;
-    for (int n = 0; n < 10; ++n)
-    {
-        v.emplace_back(f);
-    }
-    for (auto& t : v)
-    {
-        t.join();
-    }
-    assert(cnt == 10000);
-    return 0;
+    std::vector<std::thread> v;
+    for (int n = 0; n < 10; ++n)
+    {
+        v.emplace_back(f);
+    }
+    for (auto& t : v)
+    {
+        t.join();
+    }
+    assert(cnt == 10000);
+    return 0;
 }
 ```
 #### memory_order_consume
@@ -298,23 +298,23 @@ std::atomic<std::string*> ptr;
 int data;
 void producer()
 {
-    std::string* p = new std::string("Hello");
-    data = 22;
-    ptr.store(p, std::memory_order_release); // store操作属于把数据写回内存，因此需要把前面的内存操作都先执行完，实际上控制的是 store buffer 的顺序
+    std::string* p = new std::string("Hello");
+    data = 22;
+    ptr.store(p, std::memory_order_release); // store操作属于把数据写回内存，因此需要把前面的内存操作都先执行完，实际上控制的是 store buffer 的顺序
 }
 void consumer()
 {
-    std::string* p2;
-    while (!(p2 = ptr.load(std::memory_order_consume))); // load操作属于把数据从内存读到寄存器，实际上控制的是 invalid queue 的顺序
-    assert(*p2 == "Hello"); // 永远不会失败
-    assert(data == 42);// 可能失败,因为可能被提前到while之前做了判断。因为是release，因此while之后是保证data==42的
+    std::string* p2;
+    while (!(p2 = ptr.load(std::memory_order_consume))); // load操作属于把数据从内存读到寄存器，实际上控制的是 invalid queue 的顺序
+    assert(*p2 == "Hello"); // 永远不会失败
+    assert(data == 42);// 可能失败,因为可能被提前到while之前做了判断。因为是release，因此while之后是保证data==42的
 }
 int main()
 {
-    std::thread t1(producer);
-    std::thread t2(consumer);
-    t1.join();
-    t2.join();
+    std::thread t1(producer);
+    std::thread t2(consumer);
+    t1.join();
+    t2.join();
 }
 ```
 #### release + acquire 构成了 synchronize-with 关系
@@ -329,22 +329,22 @@ int data{0};
 std::atomic<int> var{0};
 void sender()
 {
-    data = 22;
-    var.store(100, std::memory_order_relaxed);
-    ready.store(true, std::memory_order_release); // 本语句之前的内存操作语句都不会被优化到本store之后，控制的是 store buffer 的顺序
+    data = 22;
+    var.store(100, std::memory_order_relaxed);
+    ready.store(true, std::memory_order_release); // 本语句之前的内存操作语句都不会被优化到本store之后，控制的是 store buffer 的顺序
 }
 void receiver()
 {
-    while(!ready.load(std::memory_order_acquire)); // 在这之后的所有的内存操作都不能在被优化到本load语句之前，控制的是 invalid queue 的顺序
-    assert(data == 22); // 永远都成功
-    assert(var == 100); // 永远都成功
+    while(!ready.load(std::memory_order_acquire)); // 在这之后的所有的内存操作都不能在被优化到本load语句之前，控制的是 invalid queue 的顺序
+    assert(data == 22); // 永远都成功
+    assert(var == 100); // 永远都成功
 }
 int main()
 {
-    std::thread t1(sender);
-    std::thread t2(receiver);
-    t1.join();
-    t2.join();
+    std::thread t1(sender);
+    std::thread t2(receiver);
+    t1.join();
+    t2.join();
 }
 ```
 #### memory_order_acq_rel
@@ -360,43 +360,42 @@ std::atomic<int> flag{0};
 int num;
 void thread_1()
 {
-    data.push_back(42);
-    flag.store(1, std::memory_order_release);
+    data.push_back(42);
+    flag.store(1, std::memory_order_release);
 }
 void thread_2()
 {
-    // 对于RMW（Read-Modify-Writes，需要实现原子性）操作，属于把三个操作绑定为一个原子性操作，因此需要使用memory_order_acq_rel 或者 memory_order_seq_cst
-    // compare_exchange_weak(T& expected, T desired, std::memory_order order = std::memory_order_seq_cst)
-    // compare_exchange_strong(T& expected, T desired, std::memory_order order = std::memory_order_seq_cst)
-    // 作用都是比较*this和 expected值，如果二者相等，那么把*this替换为 desired，并返回true（RMW 操作）
-    // 如果不想等则把expected赋值为*this的值（load 操作）
-    // 不同的是weak可能会因为（fail spuriously) 而导致返回错误结果，因此需要放在loop中判断（如while）
-    int expected = 1; // 由于memory_order_acq_rel，因此expected会比下面的语句优先执行
-    num = 22; // 这个语句也不会被重排到后面执行
-    while(!flag.compare_exchange_strong(expected, 2, std::memory_order_acq_rel)) // 是当flag的值与expected不一致时，代表thread_1还没有执行，flag = 0,会使expected被置为0，因此需要在循环体内继续把expected设置为1
-    {
-        expected = 1;
-    }
-    assert(num == 22);
+    // 对于RMW（Read-Modify-Writes，需要实现原子性）操作，属于把三个操作绑定为一个原子性操作，因此需要使用memory_order_acq_rel  ry_order_seq_cst
+    // compare_exchange_weak(T& expected, T desired, std::memory_order order = std::memory_order_seq_cst)
+    // compare_exchange_strong(T& expected, T desired, std::memory_order order = std::memory_order_seq_cst)
+    // 作用都是比较*this和 expected值，如果二者相等，那么把*this替换为 desired，并返回true（RMW 操作）
+    // 如果不想等则把expected赋值为*this的值（load 操作）
+    // 不同的是weak可能会因为（fail spuriously) 而导致返回错误结果，因此需要放在loop中判断（如while）
+    int expected = 1; // 由于memory_order_acq_rel，因此expected会比下面的语句优先执行
+    num = 22; // 这个语句也不会被重排到后面执行
+    while(!flag.compare_exchange_strong(expected, 2, std::memory_order_acq_rel)) // 是当flag的值与expected不一致时，代表thread_1还没有执行，flag    会使expected被置为0，因此需要在循环体内继续把expected设置为1
+    {
+        expected = 1;
+    }
+    assert(num == 22);
 }
 void thread_3()
 {
-    while(flag.load(std::memory_order_acquire) < 2);
-    assert(data.at(0) == 42);
-    assert(num == 22);
+    while(flag.load(std::memory_order_acquire) < 2);
+    assert(data.at(0) == 42);
+    assert(num == 22);
 }
 int main()
 {
-    for (int i = 0; i < 100; ++i)
-    {
-        std::thread a(thread_1);
-        std::thread b(thread_2);
-        std::thread c(thread_3);
-       
-        a.join();
-        b.join();
-        c.join();
-    }  
+    for (int i = 0; i < 100; ++i)
+    {
+        std::thread a(thread_1);
+        std::thread b(thread_2);
+        std::thread c(thread_3);
+        a.join();
+        b.join();
+        c.join();
+    }  
 }
 ```
 #### memory_order_seq_cst
@@ -412,39 +411,39 @@ std::atomic<bool> y{false};
 std::atomic<int> z{0};
 void write_x()
 {
-    x.store(true, std::memory_order_seq_cst);
+    x.store(true, std::memory_order_seq_cst);
 }
 void write_y()
 {
-    y.store(true, std::memory_order_seq_cst);
+    y.store(true, std::memory_order_seq_cst);
 }
 void read_x_then_y()
 {
-    while (!x.load(std::memory_order_seq_cst)); // 如果不使用 memory_order_seq_cst，即无法保证 y.load 在  while (!y.load(std::memory_order_seq_cst));之前执行，
-    // 那么就可能出现，线程c、d同时把x，y都读取到寄存器，然后同时执行完while语句之后，根据自身寄存器状态，发现x/y是0,因此最终z = 0
-    if (y.load(std::memory_order_seq_cst))
-    {
-        ++z;
-    }
+    while (!x.load(std::memory_order_seq_cst)); // 如果不使用 memory_order_seq_cst，即无法保证 y.load 在  while (!y.    ::memory_order_seq_cst));之前执行，
+    // 那么就可能出现，线程c、d同时把x，y都读取到寄存器，然后同时执行完while语句之后，根据自身寄存器状态，发现x/y是0,因此最终z = 0
+    if (y.load(std::memory_order_seq_cst))
+    {
+        ++z;
+    }
 }
 void read_y_then_x()
 {
-    while (!y.load(std::memory_order_seq_cst));
-    if (x.load(std::memory_order_seq_cst))
-    {
-        ++z;
-    }
+    while (!y.load(std::memory_order_seq_cst));
+    if (x.load(std::memory_order_seq_cst))
+    {
+        ++z;
+    }
 }
 int main()
 {
-    std::thread a(write_x);
-    std::thread b(write_y);
-    std::thread c(read_x_then_y);
-    std::thread d(read_y_then_x);
-    a.join();
-    b.join();
-    c.join();
-    d.join();
-    assert(z.load() != 0);
+    std::thread a(write_x);
+    std::thread b(write_y);
+    std::thread c(read_x_then_y);
+    std::thread d(read_y_then_x);
+    a.join();
+    b.join();
+    c.join();
+    d.join();
+    assert(z.load() != 0);
 }
 ```
