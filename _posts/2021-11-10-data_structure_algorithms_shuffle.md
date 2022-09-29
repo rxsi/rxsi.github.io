@@ -27,8 +27,8 @@ author: Rxsi
 Python版本：
 ```python
 import random
-def shuffle(nums):    
-    for i in range(len(nums)-1, -1, -1):        
+def shuffle(nums):
+    for i in range(len(nums)-1, -1, -1):    
         j = random.randint(0, i) # [0, i]范围
         nums[i], nums[j] = nums[j], nums[i]
 ```
@@ -74,11 +74,13 @@ int main()
     当池子满，以 m+1 为例，加入了新值需要随机淘汰一个，那么 i 值没有被淘汰的概率为 m/(m+1)；
     以 m+2 为例，此时池子里面只有 m 个值，但是为了保证对于每一个加入值都有公平的概率，此时要考虑之前已经加入过的值，因此池子总数要当成 m+2，因此 i 值没有被淘汰的概率为 (m+1)/(m+2)
     以此类推，n次的时候概率为 (n-1)/n，因此最后的总概率为：
+
     ![litter_than_m.png](/images/data_structure_algorithms_shuffle/litter_than_m.png)
 
 2. i为在 >m 时进入的池子，且最后留在池子的概率：
     如果 i = m+1，那么能够成功进入池子的概率为 m/(m+1)，即 m/i；
     后面每次不被替换的概率为：1-1/(i+1), 1-1/(i+2) .... 1-(1/n)，因此最后的总概率为：
+    
     ![better_than_m.png](/images/data_structure_algorithms_shuffle/better_than_m.png)
 
 Python版本：
