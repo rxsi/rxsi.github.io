@@ -230,6 +230,7 @@ __default_alloc_template<__threads, __inst>::_S_chunk_alloc(size_t __size,
 
 1. 判断回收的内存空间大于 128bytes，调用第一级配置器，最终会使用 free() 函数释放该内存空间
 2. 小于等于 128bytes，将其放回到 free_list
+
 ```cpp
   /* __p may not be 0 */
   static void deallocate(void* __p, size_t __n)
