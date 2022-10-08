@@ -55,8 +55,8 @@ CPU 与内存之间的数据传输关系可以归纳为：
 引入 Store buffer 之后，解决了发送端 CPU 等待 ACK 信息而阻塞的问题，但是当接收端 CPU 无法及时处理发送端信息（Invalidate Message，使本 CPU 的 cacheline 数据状态转变为 Invalid）时，最终会导致发送端 CPU 的 store buffer 因不能及时接收到 ACK 信息而最终被塞满。
 为了解决这个问题，引入了 Invalidate Queues，用以缓存 Invalidate Message，并直接回复 ACK 信息，表示自己已经接收到，并再慢慢处理。
 ## Store Buffer 和 Invalidate Queues 的风险
-虽然加入了 Store Buffer，但是因为有 store forwarding，因此可以保证在单核情况下的程序执行流程，但是对于多核来说，这个流程就无法保证了。再加上 Invalidate Queues 会使得 CPU 处理 Invalidate Message 的时机出现延后，如果不加措施保障 CPU 在处理 Message 之前不能操作相关数据的 cacheline，那么也会造成读取的数据不是最新的。
-总的来说就是各 CPU 核心在处理 Store、Load 指令时，可能存在重排的现象（乱序执行），归纳为 **Load-Store、Store-Load、Load-Load、Store-Store** 这四种乱序结果。
+虽然加入了 Store Buffer，但是因为有 store forwarding，因此可以保证在单核情况下的程序执行流程，但是对于多核来说，这个流程就无法保证了，这个问题是无法通过 MESI 协议解决的。再加上 Invalidate Queues 会使得 CPU 处理 Invalidate Message 的时机出现延后，如果不加措施保障 CPU 在处理 Message 之前不能操作相关数据的 cacheline，那么也会造成读取的数据不是最新的。
+总的来说就是各 CPU 核心在处理 Store、Load 指令时，可能存在重排的现象（乱序执行，对于本核来说乱序执行之后的结果仍是正确的，但是对于其他核依赖于这份数据的则会造成异常），归纳为 **Load-Store、Store-Load、Load-Load、Store-Store** 这四种乱序结果。
 不同架构的处理器有不同的内存模型（CPU MEMORY MODEL），在不同的数据模型下对于 **Load/Store** 操作的顺序有着不同的处理方式，概括如下：
 
 ![memory_order.png](/images/c%2B%2B_atomic_volatile/memory_order.png)
