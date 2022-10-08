@@ -13,6 +13,7 @@ author: Rxsi
 # Python 的运行
 ## Python 语言的类型
 我们一般说 Python 是一门解释型的语言，因为它可以通过`Python code.py`的方式直接运行代码，而无需像编译型语言如 C++ 那样需要先经过编译才可以运行
+
 我们来做个测试：
 ```python
 ## main.py
@@ -30,6 +31,7 @@ if __name__ == '__main__':
 Python 是解释型语言吗？
 ```
 查看文件夹也没有额外文件产生，这符合解释型语言的特征
+
 再做个测试，在 main.py 导入其他模块
 ```python
 ## code.py
@@ -51,7 +53,7 @@ if __name__ == '__main__':
 Python 是解释型语言吗？
 code.py 中的 Fun2 函数
 ```
-查看文件夹，可以看到在程序运行之后，创建了文件夹`__pycache__`和新文件`code.cpython-36.pyc`
+此时查看文件夹，可以看到在程序运行之后，创建了文件夹`__pycache__`和新文件`code.cpython-36.pyc`
 
 ![pyc_file.png](/images/python_pycodeobject_sourcecode/pyc_file.png)
 
@@ -59,8 +61,7 @@ code.py 中的 Fun2 函数
 
 ![python_run.png](/images/python_pycodeobject_sourcecode/python_run.png)
 
-而之所以没有为 main.py 文件生成`.pyc`文件，是因为这是一个一次性的运行文件，Python 解释器不会为只可能运行一次的文件生成 pyc 文件
-后续再次导入`code.py`时，优先就会使用`.pyc`文件进行反序列化
+而之所以没有为 main.py 文件生成`.pyc`文件，是因为解释器认为这是一个一次性的运行文件，Python 解释器不会为可能只运行一次的文件生成 pyc 文件，而在后续再次导入`code.py`时，优先就会使用`.pyc`文件进行反序列化
 ## .pyc 文件内容
 `.pyc`文件是一个二进制文件，他的内容是无法直接解读的，从它生成的规则来说，一个`.pyc`文件包含以下四种数据信息：
 
@@ -73,14 +74,15 @@ code.py 中的 Fun2 函数
 除了上面讲到的`.py`文件和`.pyc`文件，还有其他几种类型的文件
 ### .pyo 文件
 `.pyo`文件是经过优化的`.pyc`文件，去除了一些代码行号、断言、文件描述等，具有更小的文件体积，同时具有**更快的加载速度**，但是并不会加速程序的执行速度。不过在 **PEP 48 **之后就移除了`.pyo`文件，具体原因是`.pyc`文件具有两个优化级别，而之前都统一使用`.pyo`后缀表示，这就带来了一定的混乱性。
-而现在这两个优化都统一使用了`.pyc`文件作为后缀，只是文件名具有一些差别
+
+而现在这两个优化都统一使用了`.pyc`文件作为后缀，只是文件名具有一些差别：
 
 - 默认无优化级别：`python -m py_compile code.py`，得到文件：`code.cpython-36.pyc`
 - 优化级别一：`python -O -m py_compile code.py`，得到文件：`code.cpython-36.opt-1.pyc`
 - 优化级别二：`python -OO -m py_compile code.py`，得到文件：`code.cpython-36.opt-2.pyc`
 
 ### .pyw 文件
-这个是专门为了 windows 环境下 GUI 开发而设计的模式。在 windows 环境下运行`.pyc`文件会弹出控制台窗口，这对 GUI 图形界面开发程序不美观
+这个是专门为了 windows 环境下 GUI 开发而设计的模式。在 windows 环境下运行`.pyc`文件会弹出控制台窗口，这对 GUI 图形界面开发程序不美观。
 我们原先生成的`code.cpython-36.pyc`中因为没有输出语句，因此直接运行是察觉不到控制台窗口的创建的，先加入以下测试代码
 ```python
 def Fun3():
@@ -93,15 +95,14 @@ Fun3()
 
 ![pyc_terminal.png](/images/python_pycodeobject_sourcecode/pyc_terminal.png)
 
-当程序识别到`.pyw`文件，系统会使用`pythonw.exe`程序运行，这屏蔽了代码中的`stdout`、`stderr`入口，因此就不会有消息输出到控制台了
+当程序识别到`.pyw`文件，系统会使用`pythonw.exe`程序运行，这屏蔽了代码中的`stdout`、`stderr`入口，因此就不会有消息输出到控制台了。使用的是以下可执行文件运行代码：
 
 ![pyw_exe.png](/images/python_pycodeobject_sourcecode/pyw_exe.png)
 
 ### .pyd 文件
 `.pyd`文件格式是通过 D 语言编译后生成的二进制文件，这种文件无法被反编译，因此安全性较高
 # PyCodeObject 对象
-我们已经知道，Python 代码在编译之后，会存储在`.pyc`文件并持久化在磁盘上，而`.pyc`文件的主要内容就是`PyCodeObject`对象，这个对象存储了代码运行所需要的一切信息
-Python 解释器在遇到会把原始代码编译为`PyCodeObject`对象，在 CPython 中，该对象的定义如下：
+我们已经知道，Python 代码在编译之后，会存储在`.pyc`文件并持久化在磁盘上，而`.pyc`文件的主要内容就是`PyCodeObject`对象，这个对象存储了代码运行所需要的一切信息。Python 解释器在遇到会把原始代码编译为`PyCodeObject`对象，在 CPython 中，该对象的定义如下：
 ```c
 typedef struct {
     PyObject_HEAD
@@ -146,6 +147,7 @@ typedef struct {
 ```
 ## 名字空间和作用域
 Python 解释器在运行时，针对代码中的每一个`Code Block`都会创建一个`PyCodeObject`对象，而这个`Code Block`就是等价于我们之前平时一直提到的 **名字空间**。
+
 根据官方文档，命名空间指的是从名称到对象的映射关系，一般是通过 Python 字典实现，而作用域指的是可以访问到命名空间的正文区域。这两个概念有点绕，不过从上面的概述可以知道命名空间实际对应的是 **字典**，是具有实体的，而作用域只是一种对于访问范围的描述，从这点入手就可以比较好的理解这两个概念了。
 
 Python 的作用域一共有4种，分别是：
@@ -162,7 +164,7 @@ Python 的作用域一共有4种，分别是：
 - 内建名字空间：Python 内置的变量名称
 
 ## 字段解析
-以下面的代码为例，我们来探究下 **名字空间 **和`PyCodeObject`的对应关系
+以下面的代码为例，我们来探究下**名字空间**和`PyCodeObject`的对应关系
 ```python
 >>> test = """
 global_val = 1
@@ -185,7 +187,7 @@ class A():
 >>> m_code = compile(test, 'test_codeobject.py', 'exec')
 <code object <module> at 0x0000023833675C00, file "test_codeobject.py", line 2>
 ```
-通过上述代码，我们得到了一个对应着 **全局名字空间 **的`PyCodeObject`，即一个模块的 code 对象。这其实相当于我们定义了一个名为`test_codeobject.py`的文件，而其内容定义如下：
+通过上述代码，我们得到了一个对应着**全局名字空间**的`PyCodeObject`，即一个模块的 code 对象。这其实相当于我们定义了一个名为`test_codeobject.py`的文件，而其内容定义如下：
 ```python
 global_val = 1
 global_val_not_use = global_val
@@ -228,7 +230,7 @@ class A():
 (None, 5)
 ```
 ### co_argcount
-这个字段存储的是函数的位置参数的个数，当函数的参数含有`*`号时，则在`*`号**之前**的参数只能使用位置参数
+这个字段存储的是函数的位置参数的个数，当函数的参数含有独立的一个`*`号时，则在`*`号**之前**的参数只能使用位置参数
 ```python
 # f1函数的位置参数
 >>> f1_code.co_argcount
@@ -239,7 +241,7 @@ class A():
 1
 ```
 ### co_kwonlyargcount
-这个字段存储的是函数中的键值对参数的个数，当函数的参数含有`*`号时，则在`*`号**之后**的参数只能使用键值对参数
+这个字段存储的是函数中的键值对参数的个数，当函数的参数含有独立的一个`*`号时，则在`*`号**之后**的参数只能使用键值对参数
 ```python
 # f1函数的键值对参数
 >>> f1_code.co_kwonlyargcount
@@ -277,8 +279,7 @@ class A():
 ('f2_arg1', 'f2_local1', 'f2_local2', 'f2_local3')
 ```
 ### co_names
-该字段存储的是除了函数参数和函数局部变量之外的变量（包含了全局变量、导入变量等）
-当使用`global`关键字修改变量时，则编译器会从`co_names`中查找目标变量，如果查找不到则会报错
+该字段存储的是除了函数参数和函数局部变量之外的变量（包含了全局变量、导入变量等）。当使用`global`关键字修改变量时，则编译器会从`co_names`中查找目标变量，如果查找不到则会报错
 ```python
 # 模块
 >>> m_code.co_names
@@ -297,8 +298,7 @@ class A():
 ('global_val',)
 ```
 ### co_freevars
-当前是闭包作用域，则此处包含的是使用到的外层作用域的变量
-当使用`nonlocal`关键字修改变量时，则编译器会从`co_freevars`中查找目标变量，如果查找不到则会报错
+当前是闭包作用域，则此处包含的是使用到的外层作用域的变量。当使用`nonlocal`关键字修改变量时，则编译器会从`co_freevars`中查找目标变量，如果查找不到则会报错
 ```python
 # 模块
 >>> m_code.co_freevars
@@ -363,15 +363,6 @@ class A():
 ### co_code
 上面介绍到的字段，都属于`PyCodeObject`对象本身的静态属性，而`co_code`存储的是执行调用这些静态属性的字节码序列，我们以`f2_code.co_code`为例进行讲解
 ```python
-# def f2(f2_arg1):
-#     f2_local1 = 5
-#     f2_local2 = f1_local1
-#     f2_local3 = global_val
-
-# f2.co_consts = (None, 5)
-# f2.co_varnames = ('f2_arg1', 'f2_local1', 'f2_local2', 'f2_local3')
-# f2.co_names = ('global_val',)
-
 dis.dis(f2_code.co_code)
 0 LOAD_CONST               1 (1) # 将 co_consts[1] 推入栈顶
 2 STORE_FAST               1 (1) # 将栈顶存放到局部对象 co_varnames[1]
@@ -395,8 +386,7 @@ dis.dis(f2_code.co_code)
              14 RETURN_VALUE
 ```
 ### co_firstlineno 和 co_lnotab
-这两个字段是用来建立字节码和源码之间的行号映射关系
-以在上面使用`dis.dis(f2_code)`的输出为例
+这两个字段是用来建立字节码和源码之间的行号映射关系，以在上面使用`dis.dis(f2_code)`的输出为例：
 ```python
 #源码行号	  #字节码序列行号 	   #字节码					#参数   #实际参数
 14           0 					LOAD_CONST               1     (5)
@@ -406,8 +396,7 @@ dis.dis(f2_code.co_code)
 >>> f2_code.co_firstlineno
 13
 ```
-可以看到这里的`co_firstlineno`并不等于`14`，而是等于`13`
-这是因为实际行号，是通过`co_lnotab`记录的增量值计算的，我们来看下`f2_code`中该字段的信息
+可以看到这里的`co_firstlineno`并不等于`14`，而是等于`13`。这是因为实际行号，是通过`co_lnotab`记录的增量值计算的，我们来看下`f2_code`中该字段的信息
 ```python
 >>> f2_code.co_lnotab
 b'\x00\x01\x04\x01\x04\x01' # 每两个16进制为一组
@@ -425,13 +414,16 @@ b'\x00\x01\x04\x01\x04\x01' # 每两个16进制为一组
 
 `PyCodeObject`包含的其他信息，这里不做代码演示
 最后以一张图作为概括
+
 ![PyCodeObject.png](/images/python_pycodeobject_sourcecode/PyCodeObject.png)
+
 ## global 和 nonlocal
 Python 的名字查找是按照`局部名字空间`->`全局名字空间`->`内置名字空间`的顺序进行变量名的查找，这意味着如果在前一个名字空间中查找到名字，那么相对应后面的名字空间的同名变量将会被屏蔽。
-有时候我们需要强制指定某个变量的查询路径，因此 Python 提供了`global`和`nonlocal`这两个关键字
-下面我们用代码来看下，这个两个关键字是如何发挥作用的。
+
+有时候我们需要强制指定某个变量的查询路径，因此 Python 提供了`global`和`nonlocal`这两个关键字，下面我们用代码来看下，这个两个关键字是如何发挥作用的。
 ### global
 当程序中不存在同名的局部变量时，不管是否使用`global`关键字，编译器都会依照名字查找顺序，最终找到定义在全局名字空间中的变量，即会使用`LOAD_GLOBAL`字节码进行变量的加载，从`co_names`中查找变量
+
 如下面代码示例：
 ```python
 global_val = 1
@@ -491,8 +483,7 @@ def fun1():
 `.pyc`文件的主要内容上面已经有过简略的介绍，本节我们尝试来解读文件的内容
 ## 4种数据信息
 ### magic number
-该值是为了辨别`.pyc`文件版本，不同的 Python 版本编译之后生成的`.pyc`文件具有不同的`magic number`。
-可通过以下代码查看当前 Python 版本的`magic number`
+该值是为了辨别`.pyc`文件版本，不同的 Python 版本编译之后生成的`.pyc`文件具有不同的`magic number`。可通过以下代码查看当前 Python 版本的`magic number`：
 ```c
 >>> import imp
 >>> imp.get_magic().hex()
@@ -510,9 +501,10 @@ def fun1():
 记录了代码执行所需要的所有信息，在后文会继续展开讲解，当后面再使用`.pyc`文件时，将会重新反序列化生成`PyCodeObject`对象
 ## 源码分析
 我们知道当程序对某个模块进行导入时，就会生成对应的`.pyc`文件，我们从这个过程来看下这个过程对应的底层源码实现。
-具体`import`的底层实现不是本节的关注点，因此一些中间的调用流程这里用一张图来表示
 
-![import.png](/images/python_pycodeobject_sourcecode/import.png)
+具体`import`的底层实现不是本节的关注点，因此一些中间的调用流程这里用一张图来表示：
+
+![import.png](/images/python_pycodeobject_sourcecode/import.png, 这里蓝色的方框代表的是Python代码，黄色方块代表的是C代码)
 
 在`_find_and_load`函数的实现中，会经过一层层的调用跳转之后，最终调用的是`sys.path_hooks`中三种`loader`：
 ```python
@@ -858,6 +850,7 @@ typedef struct {
 > 注：long 代表 4 字节；byte 代表 1 字节；bytes 代表字节序列，由前置的 size 字段标识大小
 
 ![pyc_content.png](/images/python_pycodeobject_sourcecode/pyc_content.png)
+
 ## 解析 .pyc 文件
 从上面可以知道`.pyc`文件的文件内容，我们也可以直接使用相关函数进行解析读取，具体操作方式如下：
 ```python
