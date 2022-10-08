@@ -119,6 +119,7 @@ rxsi@VM-20-9-debian:~$ gdb program -p 13578
 这时候就需要分析为何`fun1()`函数是否存在死循环问题
 ## 多进程/多线程死锁
 如果进程发生死锁，那么进程会处于`S`状态，因此依然可以使用`strace`或者`gdb`命令进行分析
+
 运行`thread_test`可执行文件，这个文件会运行两个进程并形成死锁
 ```shell
 rxsi@VM-20-9-debian:~/learncpp$ ./thread_test &
@@ -158,6 +159,7 @@ Id   Target Id                                       Frame
 从上面的输出可以知道，此时子进程正阻塞在`__lll_lock_wait`函数，等待着锁的释放
 ## 让进程生成coredump文件
 在《线程与进程》中有介绍了 linux 系统信号类型，其中有一些信号的产生会使进程终止并生成`coredump`文件，因此对于严重阻塞生产环境的进程，可以使之先生成`coredump`文件，然后再杀掉进程，再重启进程，而进程异常的原因就可以从`coredump`文件中分析得知。
+
 默认情况下 linux 系统是不允许生成`coredump`文件的，限制了文件的大小为 0，从下面的指令可知：
 ```shell
 rxsi@VM-20-9-debian:~$ ulimit -c
@@ -170,13 +172,16 @@ rxsi@VM-20-9-debian:~$ ulimit -c
 unlimited
 ```
 不过这个命令只能存在于当前的会话，因此我们可以临时建立个会话调整并生成`coredump`文件之后就退出会话，这样就可以使配置回复原样了
+
 如果要永久修改配置，则需要通过下面的方式
 ```shell
 rxsi@VM-20-9-debian:~$ sudo vim /etc/security/limits.conf
 
 ```
 将文件中这个注释去掉，并修改`coredump`文件的大小
+
 ![coredump.png](/images/linux_process_kill/coredump.png)
+
 生成的`coredump`文件默认存在于当前执行命令的位置
 ```shell
 rxsi@VM-20-9-debian:~$ cat /proc/sys/kernel/core_pattern 
