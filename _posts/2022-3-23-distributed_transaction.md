@@ -13,13 +13,13 @@ author: Rxsi
 ## 分布式事务的原则
 在单机事务中，我们可以满足 **ACID** 特性。
 
-- Atomic（原子性）：InnoDb中通过undo-log保证
-- Consistency（一致性）：是AID实现之后的结果，即为目的
-- Isolation（隔离性）：通过MVCC和锁机制实现，MVCC处理的是并发读问题（转变为快照读），比单纯使用读写锁更为高效
-- Durablity（持久性）：通过redo-log保证
+- Atomic（原子性）：InnoDb 中通过 undo-log 保证
+- Consistency（一致性）：是 AID 实现之后的结果，即为目的
+- Isolation（隔离性）：通过 MVCC 和锁机制实现，MVCC 处理的是并发读问题（转变为快照读），比单纯使用读写锁更为高效
+- Durablity（持久性）：通过 redo-log 保证
 <!--more-->
 
-在分布式场景中，在集群系统中我们只能满足 **CAP** 特性之中的两个。
+在分布式场景下的集群系统中我们只能满足 **CAP** 特性之中的两个。
 
 - Avaliablity（可用性）：集群一直处于可用的状态
 - Consistency（一致性）：指在集群系统中，每个节点的数据都是相同的
