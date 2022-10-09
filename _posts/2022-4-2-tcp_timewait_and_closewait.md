@@ -10,9 +10,17 @@ author: Rxsi
 * content
 {:toc}
 
-
-## TIME_WAIT 状态等待 2MSL 的原因
+## TIME_WAIT
+当 TCP 主动发起挥手并成功关闭之后，则会进入`TIME_WAIT`状态
+### TIME_WAIT 状态的作用
+之所以设计一个长时间（2MSL，linux 中默认是 60s）的等待状态，主要有两个目的：
+1. 确保连接的可靠正常关闭
+    
+2. 确保重用相同 IP、端口的连接不会接收到上个连接的旧数据包
+    如果在重用之后网络环境中还存在上条连接的旧数据包，
+### TIME_WAIT 状态等待 2MSL 的原因
 客户端发出 ACK 报文时，最大化时间考虑的假设是 **“该ACK报文经过了一个最大化的报文生存时间（MSL）才被服务端接收”**，如果没有被接收到，那么服务端会重新下发 FIN 报文，那么假设也是 **“经过了最大化的报文生成时间（MSL）才到达客户端”**，那么这样一来一去，也就是需要 2MSL 了。在 linux 系统中，这个时间默认是`60s`。
+http://www.serverframework.com/asynchronousevents/2011/01/time-wait-and-its-design-implications-for-protocols-and-scalable-servers.html
 **注意：当客户端重新接收到 FIN 报文时，2MSL 会重新计时**
 
 ## TCP TIME_WAIT状态过多
