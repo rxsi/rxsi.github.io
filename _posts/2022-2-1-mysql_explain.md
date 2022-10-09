@@ -47,6 +47,7 @@ mysql> explain select * from test_table where age  = 1;
 可见一个explain语句会分析sql语句的执行情况，其中共有以下几个字段
 ### id
 表示当前语句的查询顺序，一般有三种情况：
+
 1：id全为1，则同属于同一层，顺序执行
 ```sql
 mysql> explain select test_table.* from test_table, test_table2 where test_table.id = test_table2.id;
@@ -94,7 +95,7 @@ mysql> explain select test_table.* from test_table where id = (select id from te
 ### type
 表示MySQL在表中找到所需行的方式，又称为“访问类型”，常见类型有：（性能从上到下递增）
 
-- ALL：性能最差，全表查询
+- ALL：性能最差，全表查询，一般是由于查询的条件未建立索引
 ```sql
 mysql> explain select * from test_table where height = 10;
 +----+-------------+------------+------------+------+---------------+------+---------+------+------+----------+-------------+
@@ -105,7 +106,7 @@ mysql> explain select * from test_table where height = 10;
 1 row in set, 1 warning (0.00 sec)
 ```
 
-- index：遍历索引树（注意与eq_ref的区别）
+- index：遍历索引树，意味着所有查询数据都可以直接从索引树获取（注意与eq_ref的区别）
 ```sql
 mysql> explain select id from test_table;
 +----+-------------+------------+------------+-------+---------------+--------------+---------+------+------+----------+-------------+
@@ -116,21 +117,22 @@ mysql> explain select id from test_table;
 1 row in set, 1 warning (0.00 sec)
 ```
 
-- range：范围查询，常见的关键字有：between，< , > , in 等，这个也会利用到索引，因此性能高于`index`
-比方说我们对索引进行`like`模糊查询时，如果查询形式为`select * from test_table where name like '林%'`，这样是可以利用到索引的，而且是就是范围查询。如果查询形式为`select * from test_table where name like '%林' 或者 like '%林%'`，这种则会直接使用全表查询
-```sql
-mysql> explain select * from test_table where id in (3, 4);
-+----+-------------+------------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
-| id | select_type | table      | partitions | type  | possible_keys | key     | key_len | ref  | rows | filtered | Extra       |
-+----+-------------+------------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
-|  1 | SIMPLE      | test_table | NULL       | range | PRIMARY       | PRIMARY | 4       | NULL |    2 |   100.00 | Using where |
-+----+-------------+------------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
-1 row in set, 1 warning (0.00 sec)
-```
+- range：范围查询，常见的关键字有：between，< , > , in 等，这个也会利用到索引，但是只需要扫描一定范围，因此性能高于`index`
 
-- ref：使用非唯一索引查询
+  此外，对索引进行`like`模糊查询时，如果查询形式为`select * from test_table where name like '林%'`，这种方式会直接扫描`name`索引（如果有建立索引的话）进行匹配，因为索引本身是按照字典序进行排列的，因此也是可以进行范围查询。而如果查询形式为`select * from test_table where name like '%林' 或者 like '%林%'`，这种则只能通过全表查询
+  ```sql
+  mysql> explain select * from test_table where id in (3, 4);
+  +----+-------------+------------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+  | id | select_type | table      | partitions | type  | possible_keys | key     | key_len | ref  | rows | filtered | Extra       |
+  +----+-------------+------------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+  |  1 | SIMPLE      | test_table | NULL       | range | PRIMARY       | PRIMARY | 4       | NULL |    2 |   100.00 | Using where |
+  +----+-------------+------------+------------+-------+---------------+---------+---------+------+------+----------+-------------+
+  1 row in set, 1 warning (0.00 sec)
+  ```
+
+- ref：使用非唯一索引查询，比如下面的搜索索引`name`是非唯一的，可能存在同时匹配多条记录的情况
 ```sql
-mysql> explain select * from test_table where name = "";
+mysql> explain select * from test_table where name = "林";
 +----+-------------+------------+------------+------+---------------+--------------+---------+-------+------+----------+-------+
 | id | select_type | table      | partitions | type | possible_keys | key          | key_len | ref   | rows | filtered | Extra |
 +----+-------------+------------+------------+------+---------------+--------------+---------+-------+------+----------+-------+
@@ -139,7 +141,7 @@ mysql> explain select * from test_table where name = "";
 1 row in set, 1 warning (0.00 sec)
 ```
 
-- eq_ref：使用唯一索引查询，如primary key
+- eq_ref：使用**主键、唯一索引**查询，且查询的**目标比较值不是常量**，且是查询一条数据（即 = xx）
 ```sql
 mysql> explain select test_table.* from test_table, test_table2 where test_table.id = test_table2.id;
 +----+-------------+-------------+------------+--------+---------------+---------+---------+--------------------+------+----------+-------------+
@@ -152,9 +154,9 @@ mysql> explain select test_table.* from test_table, test_table2 where test_table
 4
 ```
 
-- const：当MySQL对查询某部分进行优化，并转换为一个常量时，使用这些类型访问。如将主键置于where列表中，MySQL就能将该查询转换为一个常量
+- const：当查询的目标最多只会存在一条数据，比如查询**主键、唯一键**等，且**目标比较值是一个常量**，那么查询得到的结果将会被优化器当成常量处理，因此性能高。
 ```sql
-mysql> explain select * from (select * from test_table where id = 1) b1;
+mysql> explain select * from test_table where id = 1;
 +----+-------------+------------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
 | id | select_type | table      | partitions | type  | possible_keys | key     | key_len | ref   | rows | filtered | Extra |
 +----+-------------+------------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
@@ -163,21 +165,20 @@ mysql> explain select * from (select * from test_table where id = 1) b1;
 1 row in set, 1 warning (0.00 sec)
 ```
 
-- system：const类型的特例，当查询的表只有一行的情况下，使用system
-- NULL：MySQL在优化过程中分解语句，执行时甚至不用访问表或索引，例如从一个索引列里选取最小值可以通过单独索引查找完成。
+- system：const类型的特例，当查询的表只会有一行的情况下（系统表），使用system
+- NULL：MySQL在优化过程中分解语句，发现所要查询的数据有额外存储，不需要访问索引树，比如获取索引的最大/小值。
 ```sql
-mysql> explain select * from test_table where id = (select min(id) from test_table2);
-+----+-------------+------------+------------+-------+---------------+---------+---------+-------+------+----------+------------------------------+
-| id | select_type | table      | partitions | type  | possible_keys | key     | key_len | ref   | rows | filtered | Extra                        |
-+----+-------------+------------+------------+-------+---------------+---------+---------+-------+------+----------+------------------------------+
-|  1 | PRIMARY     | test_table | NULL       | const | PRIMARY       | PRIMARY | 4       | const |    1 |   100.00 | NULL                         |
-|  2 | SUBQUERY    | NULL       | NULL       | NULL  | NULL          | NULL    | NULL    | NULL  | NULL |     NULL | Select tables optimized away |
-+----+-------------+------------+------------+-------+---------------+---------+---------+-------+------+----------+------------------------------+
-2 rows in set, 1 warning (0.00 sec)
+mysql> explain select min(id) from test_table;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                        |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------------------+
+|  1 | SIMPLE      | NULL  | NULL       | NULL | NULL          | NULL | NULL    | NULL | NULL |     NULL | Select tables optimized away |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------------------+
+1 row in set, 1 warning (0.05 sec)
 ```
 
 ### table
-当前查询的表
+当前查询的表名
 ### partitions
 如果查询基于分区表，将会显示访问的是哪个区
 ### possible_keys
