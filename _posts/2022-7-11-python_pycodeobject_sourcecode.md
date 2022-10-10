@@ -26,7 +26,7 @@ if __name__ == '__main__':
 <!--more-->
 
 在命令行中，直接运行 main.py，输出如下：
-```python
+```shell
 >>> python main.py
 Python 是解释型语言吗？
 ```
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     Fun1()
 ```
 再次运行，得到的输出如下：
-```python
+```shell
 >>> python main.py
 Python 是解释型语言吗？
 code.py 中的 Fun2 函数
@@ -165,7 +165,7 @@ Python 的作用域一共有4种，分别是：
 
 ## 字段解析
 以下面的代码为例，我们来探究下**名字空间**和`PyCodeObject`的对应关系
-```python
+```shell
 >>> test = """
 global_val = 1
 global_val_not_use = global_val
