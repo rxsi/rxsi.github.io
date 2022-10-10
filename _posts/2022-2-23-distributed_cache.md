@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 缓存更新
+title: 缓存策略
 date: 2022-2-23 16:40:21 +0800
 categories: 分布式
 tags: 分布式 缓存 
