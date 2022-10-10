@@ -504,7 +504,7 @@ def fun1():
 
 具体`import`的底层实现不是本节的关注点，因此一些中间的调用流程这里用一张图来表示：
 
-![import.png](/images/python_pycodeobject_sourcecode/import.png, 这里蓝色的方框代表的是Python代码，黄色方块代表的是C代码)
+![import.png](/images/python_pycodeobject_sourcecode/import.png, "这里蓝色的方框代表的是Python代码，黄色方块代表的是C代码")
 
 在`_find_and_load`函数的实现中，会经过一层层的调用跳转之后，最终调用的是`sys.path_hooks`中三种`loader`：
 ```python
