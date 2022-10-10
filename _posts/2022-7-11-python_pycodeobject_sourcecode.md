@@ -209,7 +209,7 @@ class A():
 下面我们就依照这个模块中的代码，分别解析一些主要字段的意义
 ### co_consts
 该字段主要存储的是当前名字空间中的常量和包含的 code 对象
-```python
+```shell
 # 先查看模块对应的 PyCOdeObject 对象
 >>> m_code.co_consts
 (1, <code object A at 0x0000023833675930, file "test_codeobject.py", line 4>, 'A', None)
@@ -231,7 +231,7 @@ class A():
 ```
 ### co_argcount
 这个字段存储的是函数的位置参数的个数，当函数的参数含有独立的一个`*`号时，则在`*`号**之前**的参数只能使用位置参数
-```python
+```shell
 # f1函数的位置参数
 >>> f1_code.co_argcount
 4 # 这里包含了 self 参数，所以是 4 个
@@ -242,7 +242,7 @@ class A():
 ```
 ### co_kwonlyargcount
 这个字段存储的是函数中的键值对参数的个数，当函数的参数含有独立的一个`*`号时，则在`*`号**之后**的参数只能使用键值对参数
-```python
+```shell
 # f1函数的键值对参数
 >>> f1_code.co_kwonlyargcount
 2 
@@ -253,7 +253,7 @@ class A():
 ```
 ### co_nlocals 和 co_varname
 这个字段存储的是局部变量个数，而且只是`co_varnames`的计数
-```python
+```shell
 # 模块的局部变量
 >>> m_code.co_nlocals
 0
@@ -280,7 +280,7 @@ class A():
 ```
 ### co_names
 该字段存储的是除了函数参数和函数局部变量之外的变量（包含了全局变量、导入变量等）。当使用`global`关键字修改变量时，则编译器会从`co_names`中查找目标变量，如果查找不到则会报错
-```python
+```shell
 # 模块
 >>> m_code.co_names
 ('global_val', 'global_val_not_use', 'A')
@@ -299,7 +299,7 @@ class A():
 ```
 ### co_freevars
 当前是闭包作用域，则此处包含的是使用到的外层作用域的变量。当使用`nonlocal`关键字修改变量时，则编译器会从`co_freevars`中查找目标变量，如果查找不到则会报错
-```python
+```shell
 # 模块
 >>> m_code.co_freevars
 ()
@@ -319,7 +319,7 @@ class A():
 ```
 ### co_cellvars
  如果本作用域包含了闭包作用域，则此处包含的是被闭包作用域使用到的定义在本作用域中的名字，实际上这个字段是和`co_freevars`字段相对应
-```python
+```shell
 # 模块
 >>> m_code.co_cellvars
 ()
@@ -338,7 +338,7 @@ class A():
 ```
 ### co_filename
 当前的文件名
-```python
+```shell
 >>> m_code.co_filename
 'test_codeobject.py'
 >>> A_code.co_filename
@@ -350,7 +350,7 @@ class A():
 ```
 ### co_name
 当前`PyCodeObject`对象的名称
-```python
+```shell
 >>> m_code.co_name
 '<module>'
 >>> A_code.co_name
@@ -362,7 +362,7 @@ class A():
 ```
 ### co_code
 上面介绍到的字段，都属于`PyCodeObject`对象本身的静态属性，而`co_code`存储的是执行调用这些静态属性的字节码序列，我们以`f2_code.co_code`为例进行讲解
-```python
+```shell
 dis.dis(f2_code.co_code)
 0 LOAD_CONST               1 (1) # 将 co_consts[1] 推入栈顶
 2 STORE_FAST               1 (1) # 将栈顶存放到局部对象 co_varnames[1]
@@ -374,7 +374,7 @@ dis.dis(f2_code.co_code)
 14 RETURN_VALUE # 返回栈顶元素到调用者
 ```
 如果传入`dis`函数的是`PyCodeObject`对象，即会根据 code 对象上的静态属性，直接展示对应属性名，如
-```python
+```shell
 >>> dis.dis(f2_code)
  14           0 LOAD_CONST               1 (5)
               2 STORE_FAST               1 (f2_local1)
@@ -387,17 +387,17 @@ dis.dis(f2_code.co_code)
 ```
 ### co_firstlineno 和 co_lnotab
 这两个字段是用来建立字节码和源码之间的行号映射关系，以在上面使用`dis.dis(f2_code)`的输出为例：
-```python
+```shell
 #源码行号	  #字节码序列行号 	   #字节码					#参数   #实际参数
 14           0 					LOAD_CONST               1     (5)
 ```
 字节码序列行号总是`0`开始，即它代表的意思是当前字节码在`co_code`中的下标，而源码行号则依赖`co_firstlineno`字段标记
-```python
+```shell
 >>> f2_code.co_firstlineno
 13
 ```
 可以看到这里的`co_firstlineno`并不等于`14`，而是等于`13`。这是因为实际行号，是通过`co_lnotab`记录的增量值计算的，我们来看下`f2_code`中该字段的信息
-```python
+```shell
 >>> f2_code.co_lnotab
 b'\x00\x01\x04\x01\x04\x01' # 每两个16进制为一组
 ```
@@ -446,13 +446,13 @@ def fun1():
     fun1_local = global_val
     
 # 屏蔽2：这种方式容易出错
-1) 正常代码，使用的是全局变量
+# 1) 正常代码，使用的是全局变量
 global_val = 1
 def fun1():
     v = global_val + 2
     fun1_local = v
 
-2) 异常代码，使用的是未定义的局部变量
+# 2) 异常代码，使用的是未定义的局部变量
 global_val = 1
 def fun1():
     v = global_val + 2
@@ -484,7 +484,7 @@ def fun1():
 ## 4种数据信息
 ### magic number
 该值是为了辨别`.pyc`文件版本，不同的 Python 版本编译之后生成的`.pyc`文件具有不同的`magic number`。可通过以下代码查看当前 Python 版本的`magic number`：
-```c
+```shell
 >>> import imp
 >>> imp.get_magic().hex()
 '330d0d0a'
@@ -792,12 +792,12 @@ typedef struct {
 ```
 对于字符类型的处理就比较复杂。字符对象的底层实现根据不同的字符串长度，有不同的底层编码对象格式，如下表所示
 
-| | **maxchar < 128** | **maxchar < 256** | **maxchar < 65536** | **maxchar < MAX_UNICODE** |
+| | maxchar < 128 | maxchar < 256 | maxchar < 65536 | maxchar < MAX_UNICODE |
 | --- | --- | --- | --- | --- |
-| **kind** | PyUnicode_1BYTE_KIND | PyUnicode_1BYTE_KIND | PyUnicode_2BYTE_KIND | PyUnicode_4BYTE_KIND |
-| **ascii** | 1 | 0 | 0 | 0 |
-| **字符存储单元大小** | 1 | 1 | 2 | 4 |
-| **底层结构体** | PyASCIIObject | PyCompactUnicodeObject | PyCompactUnicodeObject | PyCompactUnicodeObject |
+| kind | PyUnicode_1BYTE_KIND | PyUnicode_1BYTE_KIND | PyUnicode_2BYTE_KIND | PyUnicode_4BYTE_KIND |
+| ascii | 1 | 0 | 0 | 0 |
+| 字符存储单元大小 | 1 | 1 | 2 | 4 |
+| 底层结构体 | PyASCIIObject | PyCompactUnicodeObject | PyCompactUnicodeObject | PyCompactUnicodeObject |
 
 在前面介绍字符串对象生成函数时有说过，代码会依据字符串的长度采用不同的编码对象格式，因此实际上在序列化字符类型时，也会根据不同的编码对象有不同的序列化方式
 ```c
@@ -853,7 +853,7 @@ typedef struct {
 
 ## 解析 .pyc 文件
 从上面可以知道`.pyc`文件的文件内容，我们也可以直接使用相关函数进行解析读取，具体操作方式如下：
-```python
+```shell
 >>> f = open("D:\python project\__pycache__\code.cpython-36.pyc", "rb")
 
 
