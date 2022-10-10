@@ -16,8 +16,7 @@ author: Rxsi
 ![cpu_structure.png](/images/c%2B%2B_atomic_volatile/cpu_structure.png)
 <!--more-->
 ## 缓存一致性
-在多核结构下，每个核心有多级独占的 cache 高速缓冲，通常为了保证缓冲间数据的一致性，因此有了 **MESI协议**。该协议通过把 cacheline 标记为4个状态之一，形成状态机，从而保证缓存一致性。
-状态转换如下图：
+在多核结构下，每个核心有多级独占的 cache 高速缓冲，通常为了保证缓冲间数据的一致性，因此有了 **MESI协议**。该协议通过把 cacheline 标记为4个状态之一，形成状态机，从而保证缓存一致性。状态转换如下图：
 
 ![MESI.png](/images/c%2B%2B_atomic_volatile/MESI.png)
 
@@ -56,8 +55,8 @@ CPU 与内存之间的数据传输关系可以归纳为：
 为了解决这个问题，引入了 Invalidate Queues，用以缓存 Invalidate Message，并直接回复 ACK 信息，表示自己已经接收到，并再慢慢处理。
 ## Store Buffer 和 Invalidate Queues 的风险
 虽然加入了 Store Buffer，但是因为有 store forwarding，因此可以保证在单核情况下的程序执行流程，但是对于多核来说，这个流程就无法保证了，这个问题是无法通过 MESI 协议解决的。再加上 Invalidate Queues 会使得 CPU 处理 Invalidate Message 的时机出现延后，如果不加措施保障 CPU 在处理 Message 之前不能操作相关数据的 cacheline，那么也会造成读取的数据不是最新的。
-总的来说就是各 CPU 核心在处理 Store、Load 指令时，可能存在重排的现象（乱序执行，对于本核来说乱序执行之后的结果仍是正确的，但是对于其他核依赖于这份数据的则会造成异常），归纳为 **Load-Store、Store-Load、Load-Load、Store-Store** 这四种乱序结果。
-不同架构的处理器有不同的内存模型（CPU MEMORY MODEL），在不同的数据模型下对于 **Load/Store** 操作的顺序有着不同的处理方式，概括如下：
+
+总的来说就是各 CPU 核心在处理 Store、Load 指令时，可能存在重排的现象（乱序执行，对于本核来说乱序执行之后的结果仍是正确的，但是对于其他核依赖于这份数据的则会造成异常），归纳为 **Load-Store、Store-Load、Load-Load、Store-Store** 这四种乱序结果。不同架构的处理器有不同的内存模型（CPU MEMORY MODEL），在不同的数据模型下对于 **Load/Store** 操作的顺序有着不同的处理方式，概括如下：
 
 ![memory_order.png](/images/c%2B%2B_atomic_volatile/memory_order.png)
 
@@ -83,9 +82,7 @@ class A
 // 而在 32 位系统中，最大处理位数是 32 位，即 4 Bytes，因此实际上double类型是分为了两个 4Bytes 存储
 // 因此上述结果为 4 + 1 + (3) + 4 + 4 + 1 + (3) = 16
 ```
-在 **多核CPU** 下，单核CPU 的原子性仍然有保障，但是多核之间的原子性则不成立，因此也需要额外的保护措施才能实现多核间的原子性。
-现代 **编译器** 还会对原始代码进行优化和重排，目的是在不改变原有语义的情况下，加速程序运行。但是这种优化编译器只能保证单个执行流中的语义不变，无法判断其他执行流对本执行流的依赖关系，因此在这种情况下，优化和重排均可能会带来异常。
-因此为了程序的最终正确性，我们分别需要 **优化屏障 和 内存屏障** 两个机制来解决编译器和 CPU 的乱序执行情况。
+在 **多核CPU** 下，单核CPU 的原子性仍然有保障，但是多核之间的原子性则不成立，因此也需要额外的保护措施才能实现多核间的原子性。现代 **编译器** 还会对原始代码进行优化和重排，目的是在不改变原有语义的情况下，加速程序运行。但是这种优化编译器只能保证单个执行流中的语义不变，无法判断其他执行流对本执行流的依赖关系，因此在这种情况下，优化和重排均可能会带来异常。因此为了程序的最终正确性，我们分别需要 **优化屏障 和 内存屏障** 两个机制来解决编译器和 CPU 的乱序执行情况。
 # linux内核
 ## 优化屏障
 在 linux 内核中，使用 barrier() 和 ACCESS_ONCE() 抑制编译器优化
@@ -161,7 +158,7 @@ mov     DWORD PTR a[rip], eax
 xor     eax, eax
 mov     DWORD PTR b[rip], 0
 ```
-**结论：volatile可以在同为volatile变量之间抑制编译器重排**
+结论：volatile可以在同为volatile变量之间抑制编译器重排
 
 ### 抑制编译器优化
 示例1：非volatile类型
@@ -185,7 +182,7 @@ int main()
 mov     DWORD PTR [rsp-4], 5 // 未被优化掉,依然是将立即数$0x5压入栈中(rsp是栈顶指针,栈内存是由高往地变化,因此是-0x4,即4字节)
 xor     eax, eax
 ```
-**结论：可通过volatile修饰一些不想要编译器优化的语句**
+结论：可通过volatile修饰一些不想要编译器优化的语句
 
 ### 对volatile变量的读取每次都从内存中读取最新值
 示例1：非volatile变量
@@ -223,7 +220,7 @@ int main()
     std::cout << b << std::endl;
 }
 ```
-**结论：volatile修饰的变量每次修改后都会从寄存器中刷回内存，每次读取都会从内存读取最新值**
+结论：volatile修饰的变量每次修改后都会从寄存器中刷回内存，每次读取都会从内存读取最新值
 
 ### 与Java的volatile关键字的不同之处
 volatile 关键字可以在汇编层面抑制重排，但是现代化的 CPU 在程序运行时会额外优化语句的执行顺序，在这方面 C++ 的 volatile 关键字无能为力。
@@ -232,8 +229,8 @@ Java 的 volatile 关键字则可以实现这方面的抑制力，本质上就�
 std::atomic 是禁用 **拷贝构造** 函数的，要注意初始化方式
 ### 六种内存模型
 #### memory_order_releaxed：
-不保证变量间的执行顺序，只保证当前变量的 store/load 的原子性
-因此适用于当个变量的原子性保证。
+不保证变量间的执行顺序，只保证当前变量的 store/load 的原子性，因此适用于当个变量的原子性保证。
+
 应用场景：程序计数器
 ```cpp
 #include <atomic>
@@ -348,8 +345,7 @@ int main()
 }
 ```
 #### memory_order_acq_rel
-同时影响 store-load 的行为，即在他之前的任何内存操作不能优化到他之后，而原本在他之后的语句不能优化到他之前
-一般用在 RMW 操作语境，**RMW 操作保证永远读取的都是最新值**
+同时影响 store-load 的行为，即在他之前的任何内存操作不能优化到他之后，而原本在他之后的语句不能优化到他之前。一般用在 RMW 操作语境，**RMW 操作保证永远读取的都是最新值**
 ```cpp
 #include <thread>
 #include <atomic>
@@ -399,8 +395,7 @@ int main()
 }
 ```
 #### memory_order_seq_cst
-当使用该内存序时，同为 memory_order_seq_cst 内存序的变量会以一个简单序列运行，且变量前后所有关于内存的操作都不会被优化重排到该变量之前或之后
-最主要的是：变量A如果是在变量B之前执行，那么变量A的前后内存操作语句都会在B之前执行。（memory_order_acq_rel只保证相同变量间的关系）
+当使用该内存序时，同为 memory_order_seq_cst 内存序的变量会以一个简单序列运行，且变量前后所有关于内存的操作都不会被优化重排到该变量之前或之后。最主要的是：变量A如果是在变量B之前执行，那么变量A的前后内存操作语句都会在B之前执行。（memory_order_acq_rel只保证相同变量间的关系）
 ```cpp
 #include <thread>
 #include <atomic>
