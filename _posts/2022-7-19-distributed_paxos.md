@@ -21,15 +21,16 @@ Basic Paxos 论述的是在分布式架构下，对于**一个变量同时出现
 - learner：学习者。接收已经达成共识的命令，对于这个角色不是很理解，在工程项目中，理论上所有的节点都应该参与投票，即至少为 acceptor
 
 三者形成的关系如下：
+
 ![relations.png](/images/distributed_paxos/relations.png)
+
 ## 全局唯一递增的序列
-对于序号的要求，必须是全局唯一的，且在单节点上必定是严格递增，而不同节点之间只需要满足趋势递增即可。
-所以这个序号的组成一般采用`时间戳 + 节点标识（如服号）+ 自增值`的形式组成，这样就可以保证单服的严格递增，而不同节点之间由于含有时间戳的缘故，也是趋势递增的。
-在 Chubby 中提出了一种计算方法，也可以参考使用：假设有 n 个 proposer，且编号为 ir (0 <= ir < n)，则 `ID = m * n + ir` （m初始为0，每次生成新序号时则递增，且应持久化）
-也可以使用`snowflake`算法生成时间戳
+对于序号的要求，必须是全局唯一的，且在单节点上必定是严格递增，而不同节点之间只需要满足趋势递增即可。所以这个序号的组成一般采用`时间戳 + 节点标识（如服号）+ 自增值`的形式组成，这样就可以保证单服的严格递增，而不同节点之间由于含有时间戳的缘故，也是趋势递增的。在 Chubby 中提出了一种计算方法，也可以参考使用：假设有 n 个 proposer，且编号为 ir (0 <= ir < n)，则 `ID = m * n + ir` （m初始为0，每次生成新序号时则递增，且应持久化）。也可以使用`snowflake`算法生成时间戳
 ## 二阶段协议
 当 proposer 接收到客户端的消息之后，会通过二阶段协议将消息分发到其余 acceptor 节点，总的交互流程可以按下图划分
+
 ![two_parser.png](/images/distributed_paxos/two_parser.png)
+
 ### Prepare - Promise
 #### Prepare
 当 proposer 接收到客户端消息，proposer 将会生成一个唯一且递增的 `proposal ID`，并通过 `PREPARE_RPC`发送给集群中的其他 acceptor 节点。
@@ -57,8 +58,7 @@ send PREPARE(proposal_ID)
 2. 之前已经接收到`PREPARE_RPC`，但还未接收到`PROPOSE_RPC`
 3. 之前已经接收到`PREPARE_RPC`，且已经接收到`PROPOSE_RPC`，并缓存了`VALUE`
 
-无论处于何种状态，acceptor 必须只能接受值更大的`proposal ID`，这保障了提案的顺序性。如果 acceptor 已经缓存了`VALUE`，表示在该 proposer 之前，已经有其他的 proposer 向 acceptor 发出了提案，该提案有可能已经达成了共识，也可能还没有。
-不管该`accepted_VALUE`是否已经达成了共识，当前 proposer 的提案是属于后来者，被接收的可能性更低，所以当前的 proposer 需要接受这份提案，转而 **_协助 _**传播这份提案
+无论处于何种状态，acceptor 必须只能接受值更大的`proposal ID`，这保障了提案的顺序性。如果 acceptor 已经缓存了`VALUE`，表示在该 proposer 之前，已经有其他的 proposer 向 acceptor 发出了提案，该提案有可能已经达成了共识，也可能还没有。不管该`accepted_VALUE`是否已经达成了共识，当前 proposer 的提案是属于后来者，被接收的可能性更低，所以当前的 proposer 需要接受这份提案，转而 **_协助 _**传播这份提案
 > **acceptor 至少需要持久化 max_id、accepted_ID、accepted_VALUE**
 
 ### Propose - Accept
@@ -94,9 +94,10 @@ else
 在此阶段，acceptor 也需要只接受值更大的`proposal ID`的提案。如果接收到的`proposal ID`小于已保存的最大ID，则说明虽然该 proposer 在之前已经通过`PREPARE_RPC`收到了绝大部分的 acceptor 的认可，但是还未来得及发出相对应的 proposal 提案，而后续又有新的 proposer 提出了新的提案，因此不能接收这份旧的提案
 **如果 proposer 收到了失败的回复，说明本节点的提案号是小于 acceptor 的提案号的，则本节点需要更新自己的提案号，然后再去发起新的 prepare 请求。**这种情况下重新发出的 prepare 请求到达 acceptor 时，如果 acceptor 已经拥有了`accepted_VALUE`，则 proposer 会更新自己的`VALUE`，因此原先的`accepted_VALUE`依然会达成共识。（这会造成活锁问题）
 ### 几个例子
-> 注：所谓的 **chosen **是指集群中绝大部分的节点都达成了共识
+> 注：所谓的 **chosen** 是指集群中绝大部分的节点都达成了共识
 
 #### 提案已被chosen，并接收到新的提案
+
 ![proposal1.png](/images/distributed_paxos/proposal1.png)
 
 1. S1收到了客户端值为X的提案，此时S1的身份是 proposer + acceptor，于是S1向所有节点（包括自身）下发`Prepare(3.1)`，并得到了S1 - S3 的回应
@@ -105,6 +106,7 @@ else
 4. 由于S3的回应中携带了`accepted_VALUE`信息，因此S5更新自己的`VALUE`信息为`accepted_VALUE`，并且进一步广播`Accept(4.5, X)`，**_协助 _**传播这份提案，因此最终达成共识
 
 #### 提案未被chosen，并接收到新的提案，proposer可见
+
 ![proposal2.png](/images/distributed_paxos/proposal2.png)
 
 1. S1收到了客户端值为X的提案，此时S1的身份是 proposer + acceptor，于是S1向所有节点（包括自身）下发`Prepare(3.1)`，并得到了S1 - S3 的回应
@@ -113,6 +115,7 @@ else
 4. 由于S3的回应中携带了`accepted_VALUE`信息，因此S5更新自己的`VALUE`信息为`accepted_VALUE`，并且进一步广播`Accept(4.5, X)`，**_协助 _**传播这份提案，因此最终达成共识。如果S5的 Accept 信息也被S1 - S2接收到，则只会转变S1 和 S2的`max_id`，对于提案内容不会变化
 
 #### 提案未被chosen，并接收到新的提案，proposer不可见
+
 ![proposal3.png](/images/distributed_paxos/proposal3.png)
 
 1. S1收到了客户端值为X的提案，此时S1的身份是 proposer + acceptor，于是S1向所有节点（包括自身）下发`Prepare(3.1)`，并得到了S1 - S3 的回应
@@ -122,7 +125,9 @@ else
 5. S1 - S2 如果在后续接收到 S5 因为延迟而到来的`Accept(4.5, Y)`，根据 accept 阶段的伪代码可知，将会丢弃 X 值而选择 Y值，因为它拥有更大的`proposal ID`
 
 #### 活锁问题
+
 ![proposal4.png](/images/distributed_paxos/proposal4.png)
+
 由于当 proposer 的提案得不到绝大部分 acceptor 的共识时，需要更新提案号，然后再发起 prepare 请求
 
 解决活锁问题，常见的解决方式有几种：
@@ -136,11 +141,9 @@ else
 #### 如果 acceptor 在接收到 PROPOSE_RPC 后宕机或者回复的 ACCEPT 消息丢失了，会发生什么？
 如果 proposer 依然可以在集群的绝大多数的 acceptor 收获到 ACCEPT 回复，则部分 acceptor 的宕机将不会影响集群整体的运行。否则 proposer 会一直重发 PROPOSE_RPC，直到接收到回复，或者被重置
 #### 如果 proposer 在 Prepare 阶段宕机了，会发生什么？
-如果 proposer 在发出 PREPARE_RPC 之前宕机的，则等价于没有执行，对于客户端来说，会收到执行失败的反馈
-当 proposer 是在发出 PREPARE_RPC 之后宕机的，不管 acceptor 是否接收到消息，最终都无法对该`proposal ID`达成共识，最终 acceptor 的状态也会应该接收到新的更大的`proposal ID`重置
+如果 proposer 在发出 PREPARE_RPC 之前宕机的，则等价于没有执行，对于客户端来说，会收到执行失败的反馈。当 proposer 是在发出 PREPARE_RPC 之后宕机的，不管 acceptor 是否接收到消息，最终都无法对该`proposal ID`达成共识，最终 acceptor 的状态也会应该接收到新的更大的`proposal ID`重置
 #### 如果 proposer 在 Propose 阶段宕机了，会发生什么？
-如果是在发出 PROPOSE_RPC 之前宕机，则和 proposer 是在发出 PREPARE_RPC 之后宕机的情形是一样的
-如果是在发出 PROPOSE_RPC 之后宕机，如果发去的消息成功被 acceptor 接收，那么只要当该 acceptor 接收到其他 proposer 下发的版本更高的`proposal ID`，并返回`PROMISE(higher-ID, <old_ID, Value>)`，则对应的 proposer 会更新自己的`VALUE`信息，并代替宕机的 proposer 节点完成后面的任务，此时消息依然能够达成共识
+如果是在发出 PROPOSE_RPC 之前宕机，则和 proposer 是在发出 PREPARE_RPC 之后宕机的情形是一样的。如果是在发出 PROPOSE_RPC 之后宕机，如果发去的消息成功被 acceptor 接收，那么只要当该 acceptor 接收到其他 proposer 下发的版本更高的`proposal ID`，并返回`PROMISE(higher-ID, <old_ID, Value>)`，则对应的 proposer 会更新自己的`VALUE`信息，并代替宕机的 proposer 节点完成后面的任务，此时消息依然能够达成共识
 #### 当想要读取 acceptor 上的值时，需要经过多一轮 Basic paxos 共识
 假设集群中有5个 acceptor，其中2个 acceptor 接收了值X，另外3个acceptor接收了值Y，由于出现了网络分区，两个子分区之间没有能够继续交互，也就造成了虽然Y在集群中达成了共识，但是并不是整个集群的节点都保留了该值。因此在实际应用该值时，还需要经过一轮 Basic Paxos，只有得到绝大数节点的认可后，才能表明当前值的正确性。
 # Multi Paxos
