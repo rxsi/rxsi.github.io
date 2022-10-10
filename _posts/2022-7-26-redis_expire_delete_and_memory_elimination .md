@@ -23,8 +23,7 @@ struct redisServer {
     // ...
 }
 ```
-Redis 默认的数据库数量是`16`个，在配置`redis/redis.conf`中可进行配置修改
-可以通过下面这张图表示：
+Redis 默认的数据库数量是`16`个，在配置`redis/redis.conf`中可进行配置修改，可以通过下面这张图表示：
 
 ![dbnum.png](/images/redis_expire_delete_and_memory_elimination/dbnum.png)
 
@@ -42,15 +41,14 @@ typedef struct redisDb {
     // ...
 } redisDb;
 ```
-可以看到对于具有过期时间的键值对是会存放到一个独立的字典中，所以 Redis 可以高效的实现对键值对有效期管理
-以下图表示：
+可以看到对于具有过期时间的键值对是会存放到一个独立的字典中，所以 Redis 可以高效的实现对键值对有效期管理，以下图表示：
 
 ![redisdb.png](/images/redis_expire_delete_and_memory_elimination/redisdb.png)
 
 # 过期删除
 ## 设置过期时间
 Redis 支持直接对某个已经存在的 key 进行过期时间的设定，有以下 4 个命令：
-```c
+```shell
 expire <key> <n> // 设置 key 在 n 秒之后过期
 
 pexpire <key> <n> // 设置 key 在 n 毫秒后过期
@@ -61,7 +59,7 @@ pexpireat <key> <n> // 设置 key 在某个时间戳之后过期，单位毫秒
 ```
 
 Redis 也支持在设置键值对时直接设置过期时间，有以下 3 个命令：
-```c
+```shell
 set <key> <value> ex <n> // 设置键值对时，指定 n 秒之后过期
 
 set <key> <value> px <n> // 设置键值对时，指定 n 毫秒之后过期
@@ -70,12 +68,12 @@ setex <key> <n> <value> // 设置键值对时，指定 n 秒之后过期
 ```
 
 查看某个键的过期时间，有以下命令：
-```c
+```shell
 TTL <key> // 显示 key 剩余的过期时间，如果 key 没有过期时间，则返回 -1
 ```
 
 取消某个键的过期时间，有以下命令：
-```c
+```shell
 persist <key> // 取消 key 的过期时间
 ```
 ## 过期键读取流程
