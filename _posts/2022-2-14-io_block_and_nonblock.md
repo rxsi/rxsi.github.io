@@ -43,6 +43,8 @@ echo "hello" > file1;
 ```
 系统首先会为 file1 创建一个文件描述符，然后把这个文件描述符复制给集合中下标为 1 的元素，因此就实现了对标准输出的重定向。
 
+![redirect.png](/images/io_block_and_nonblock/redirect.png)
+
 ## 磁盘IO的特殊性
 磁盘IO不同于网络IO，磁盘IO只能是阻塞的，也就是并不能将其设置为`O_NONBLOCK`，对其`read/write`也不会返回`EAGAIN`。这是POSIX系统对磁盘文件（regular files）的底层设计，当监听对应的磁盘`fd`时，总是返回`Ready`状态，但实际读取时如果文件数据不在内存缓存中，则read操作本身还是会“**阻塞**”等待数据从磁盘读出。
 
