@@ -17,13 +17,13 @@ author: Rxsi
 ```c
 struct files_struct { 
 	...
-	struct fdtable  *fdt;  
+	struct fdtable  *fdt; // 指向的是file结构体
 	struct fdtable  fdtab;  
 	...
 };
 ```
 <!--more-->
-每个 **files_struct** 都含有 **fdtable** 结构，本质上是文件描述符的集合，因此 int 类型的文件描述符对应的就是这个集合中的下标，而且这个集合的前三个位置已经被系统默认分配，默认情况下：
+每个 files_struct 都含有 fdtable 结构，本质上是文件描述符的集合，因此 int 类型的文件描述符对应的就是这个集合中的下标，指向`file`结构体，该结构体保存的是当前进程对文件的打开模式（可读、可写、可读写）、文件偏移量、引用计数，以及指向`inode`结构体的指针。而且这个集合的前三个位置已经被系统默认分配，默认情况下：
 
 - 0：stdin，标准输入，默认的输入硬件是键盘
 - 1：stdout，标准输出，默认的输出硬件是显示器
@@ -387,7 +387,7 @@ if (listen(listenfd, SOMAXCONN) == -1){
 - ssize_t preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset);
 - ssize_t pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset);
 
-用以将多个缓冲区数据同时写入一个 fd 套接字，使用`read/write`则需要循环调用，造成额外的性能开销。
+用以将多个缓冲区数据同时写入一个 fd 套接字，使用`read/write`则需要循环调用，这其中会引起用户态和内核态的切换，造成额外的性能开销。
 ```c
 struct iovec {
     void *iov_base; // 数据起始地址
