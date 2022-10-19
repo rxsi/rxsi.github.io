@@ -12,12 +12,18 @@ author: Rxsi
 
 # 进程/线程打开文件
 首先需要关注的是 linux 系统的文件系统结构，当我们使用`open()`函数打开一个文件时，底层会创建如下的文件结构：
+
 ![open_one_file.png](/images/io_read_write_file/open_one_file.png)
+
 在每个进程的`task_struct`结构中，包含有文件描述符表，int 类型的`fd`就是这个表的下标位置。一个文件每被打开一次，系统就会为其创建一个`file`结构，用以标识连接信息，主要包含文件状态（可读、可写、可读写），当前文件的偏移量，引用计数，指向 inode 的指针等。使用`fork()`可以复制父进程的文件描述符，父子进程会共用`file`结构，`file`结构会增加引用计数。如下图所示：
 <!--more-->
+
 ![fork_open_one_file.png](/images/io_read_write_file/fork_open_one_file.png)
+
 如果是其他进程也使用`open()`打开了相同的文件，那么会创建一个新的`file`结构，而`inode`结构的引用计数会增加。如下图所示：
+
 ![fork_opne_two_file.png](/images/io_read_write_file/fork_opne_two_file.png)
+
 在同进程下的多个线程是共享一个文件描述符的，因此这个结构是和单进程环境下是一致的。
 # 文件操作API
 我们常用的文件操作 API 分为两类，一类是 linux 平台的系统调用，另一类则是 C 语言库函数。这两类 API 的区别在于 C 语言库函数是带有缓冲区的，围绕`流（stream）`以**文件指针**操作，具有更高的执行效率，且会依据系统平台的不同而有不同的底层实现，因此具有可移植性。linux 系统调用顾名思义只能用于 linux 系统，不具有缓存区，借助的是**文件描述符**（fd）来进行文件访问。当在 linux 系统平台使用 C 语言库函数，则对应的底层实现就是 linux 系统调用。
@@ -61,7 +67,7 @@ author: Rxsi
       - O_RDWR：读写模式
       - O_EXEC：执行模式
       - O_SEARCH：搜索模式，这个模式一般用于校验搜索权限
-        这五个模式只能选一种
+            这五个模式只能选一种
 
       - O_APPEND：每次写时都添加到文件末尾，在多进程同时写时要设置这个模式
       - O_CLOEXEC：此时执行 exec 函数族则自动关闭该文件描述符
@@ -482,7 +488,7 @@ int main()
 }
 ```
 验证写入成功：
-```cpp
+```shell
 rxsi@VM-20-9-debian:~/learncpp$ grep -c "aaaaaaaaa" ../file_test.txt 
 200
 rxsi@VM-20-9-debian:~/learncpp$ grep -c "bbbbbbbbb" ../file_test.txt 
@@ -532,7 +538,7 @@ int main()
 }
 ```
 在测试的过程中发现如果使用文件指针以上面那种代码形式会出现读取异常，其中一个进程的读取偏移量会直接定位到文件尾部，不清楚具体原因：
-```cpp
+```shell
 flag: parent, processID: 9737, before ftell: 980, len: 10, data: aaaaaaaaa, after ftell: 990, fd: 3
 flag: child, processID: 9738, before ftell: 4000, len: 0, empty data, after ftell: 4000, fd: 3
 flag: parent, processID: 9737, before ftell: 990, len: 10, data: aaaaaaaaa, after ftell: 1000, fd: 3
