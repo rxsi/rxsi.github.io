@@ -85,13 +85,13 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 - void _(_start_routine) (void *)：目标线程函数，这个函数的调用方式要是**cdecl（即C风格的调用类型，默认情况下C/C++都是该调用风格；常见还有**stdcall, __fastcall等） 
    - __cdecl：C/C++默认的缺省方式，函数参数从右至左入栈，且由调用者自行清除这些参数，即生成的二进制可执行代码中都含有对应的清栈代码，因此文件体积会比较大。比方说有一个函数A，那么所有调用A函数的地方都会生成一个相对应的清栈代码
    - __stdcall：函数参数从右至左入栈，被调用函数自行清理内存栈，这样文件体积会小点。
-```cpp
-void* start_routine(void* args){} // 默认就是__cdecl风格
-// 等价于： 
-void* __cdecl start_routine(void* args){}
-```
-
+        ```cpp
+        void* start_routine(void* args){} // 默认就是__cdecl风格
+        // 等价于： 
+        void* __cdecl start_routine(void* args){}
+        ```
 - void *args：传递给线程函数的参数
+
 ```cpp
 // linux 平台的底层线程函数
 // g++ thread_test.cpp -o thread_test -lpthread
@@ -169,6 +169,7 @@ void start_fun()
 }
 ```
 这种方式线程实际就是并发执行，但是函数栈会等待所有线程执行完毕之后才退出
+
 使用`detach`则代表的是把线程独立到后台执行，函数所在线程会失去对该线程的控制权，因此函数栈可以在创建完线程之后就退出，不会影响创建线程的执行。但是这种方式要避免使用，因为如果函数栈有传递局部变量到对应创建的线程中，那么当函数栈退出之后，该变量会被销毁，当线程访问时将会造成不可预期的后果。
 ```cpp
 void start_fun()
@@ -196,6 +197,7 @@ void start_fun()
 - **pthread_create 的 pthread_t 参数**
 - **pthread_t tid = pthread_self();**
 - **int tid = syscall(SYS_gettid); // LWP ID**
+
 ```cpp
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -220,7 +222,9 @@ int main()
 
 - **std::this_thread::get_id()**
 - **std::thread.get_id()**
+
 返回的是 **std::thread::id** 类型，需要特殊的转换才能转换为int类型，返回的是LWP ID
+
 ### C++使用linux/windows线程函数签名时的注意事项
 linux/windows 的线程函数签名有固定要求，以 linux 的线程函数签名为例：
 ```cpp
