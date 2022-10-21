@@ -524,105 +524,16 @@ int main()
       <td>sys/sem.h</td>
    </tr>
    <tr>
-      <td></td>
-      <td>a</td>
-      <td>b</td>
-      <td>c</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>d</td>
-      <td>e</td>
-      <td>f</td>
-   </tr>
-</table>
-
-<table>
-   <tr>
-      <td>功能</td>
-      <td>有名信号量</td>
-      <td>无名信号量</td>
-      <td>System V信号量</td>
-   </tr>
-   <tr>
-      <td>头文件</td>
-      <td>semaphore.h</td>
-      <td>semaphore.h</td>
-      <td>sys/sem.h</td>
-   </tr>
-   <tr>
       <td>初始化</td>
-      <td>"sem_t *sem_open(const char *name, int oflag, ...);</td>
-   </tr>
-   <tr>
-      <td>/* mode_t mode, unsigned int value*/"</td>
+      <td>sem_t *sem_open(const char *name, int oflag, ...);<br>/* mode_t mode, unsigned int value*/"</td>
       <td>int sem_init(sem_t* sem, int pshared, unsigned int value);</td>
       <td>int semget(key_t key, int nsems, int oflag);</td>
    </tr>
    <tr>
       <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>"参数：</td>
-   </tr>
-   <tr>
-      <td>const char *name：系统真实路径，以单斜杠开头，且不能包含其他的单斜杠；</td>
-   </tr>
-   <tr>
-      <td>int oflag：可以是0、O_CREATE 或 O_CREATE|O_EXCL，O_EXCL 表示创建时该信号量必须是不存在的，使用 0 则单纯表示打开已有的信号量；</td>
-   </tr>
-   <tr>
-      <td>mode_t mode：指定权限位，只有当指定了O_CREATE标志才需要；</td>
-   </tr>
-   <tr>
-      <td>unsigned int value：初始的计数量，不能超过SEM_VALUES_MAX，只有当指定了 O_CREATE 标志才需要；"</td>
-      <td>"参数：</td>
-   </tr>
-   <tr>
-      <td>sem_t *sem：自定义的信号指针，当传入经过初始化后，该指针指向内核创建的信号量；</td>
-   </tr>
-   <tr>
-      <td>int pshared：0 表示信号量是在同一个进程中的各个线程共享的，否则该信号量是在进程间共享的。当为进程间共享时，需要放在某种类型的共享内存中；</td>
-   </tr>
-   <tr>
-      <td>unsigned int value：代表初始时的资源量；"</td>
-      <td>"参数：</td>
-   </tr>
-   <tr>
-      <td>key_t key：信号量key；</td>
-   </tr>
-   <tr>
-      <td>int nsems：初始信号量数，如果只是访问一个已存在的集合，则指定为0即可；</td>
-   </tr>
-   <tr>
-      <td>int oflag：SEM_R（读）、SEM_A（改），还可以与IPC_CREAT 或 IPC_CREAT | IPC_EXCL按位或；"</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-   </tr>
-   <tr>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-   </tr>
-   <tr>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-   </tr>
-   <tr>
-      <td></td>
-      <td></td>
-      <td></td>
+      <td>参数：<br>const char *name：系统真实路径，以单斜杠开头，且不能包含其他的单斜杠；<br>int oflag：可以是0、O_CREATE 或 O_CREATE|O_EXCL，O_EXCL 表示创建时该信号量必须是不存在的，使用 0 则单纯表示打开已有的信号量；<br>mode_t mode：指定权限位，只有当指定了O_CREATE标志才需要；<br>unsigned int value：初始的计数量，不能超过SEM_VALUES_MAX，只有当指定了 O_CREATE 标志才需要；</td>
+      <td>参数：<br>sem_t *sem：自定义的信号指针，当传入经过初始化后，该指针指向内核创建的信号量；<br>int pshared：0 表示信号量是在同一个进程中的各个线程共享的，否则该信号量是在进程间共享的。当为进程间共享时，需要放在某种类型的共享内存中；<br>unsigned int value：代表初始时的资源量；</td>
+      <td>参数：<br>key_t key：信号量key；<br>int nsems：初始信号量数，如果只是访问一个已存在的集合，则指定为0即可；<br>int oflag：SEM_R（读）、SEM_A（改），还可以与IPC_CREAT 或 IPC_CREAT | IPC_EXCL按位或；</td>
       <td></td>
    </tr>
    <tr>
