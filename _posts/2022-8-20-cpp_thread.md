@@ -524,10 +524,7 @@ int main()
    </tr>
    <tr>
       <td>初始化</td>
-      <td>sem_t *sem_open(const char *name, int oflag, ...);</td>
-   </tr>
-   <tr>
-      <td>/* mode_t mode, unsigned int value*/</td>
+      <td>sem_t *sem_open(const char *name, int oflag, ...);<br>/* mode_t mode, unsigned int value*/</td>
       <td>int sem_init(sem_t* sem, int pshared, unsigned int value);</td>
       <td>int semget(key_t key, int nsems, int oflag);</td>
    </tr>
