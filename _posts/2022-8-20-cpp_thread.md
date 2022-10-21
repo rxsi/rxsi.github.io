@@ -704,8 +704,8 @@ int sem_timedwait(sem_t* sem, const struct timespec* abs_timeout);
 
 struct timespec
 {
-    time_t tv_sec; 秒
-    long tv_nsec; 纳秒
+    time_t tv_sec; // 秒
+    long tv_nsec; // 纳秒
 }
 // 注意temespec是绝对时间
 ```
@@ -807,7 +807,7 @@ int main()
 #### 初始化
 ```cpp
 int pthread_cond_init(pthread_cond_t* cond, const pthread_condattr_t* attr);
-或者：
+// 或者：
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 ```
 #### 销毁
@@ -843,7 +843,9 @@ pthread_mutex_unlock(&mutex);
 pthread_cond_signal(&cond);
 ```
 使用`mutex`的唯一目的是避免 threadA 在判断 ready 为 false 之后，刚准备调用`pthread_cond_wait`函数，而失去了时间片，然后 threadB 修改了 ready 的值，并调用`pthread_cond_signal`。如果上述情况发生，那么 threadA 就会永远进行阻塞状态，因此 threadA 在判断 ready 值时需要先获得锁，以保证在进行阻塞状态之前该变量不会被其他线程修改。
+
 而在 threadA 进入阻塞状态之前是需要 unlock 锁的，此时如果没有设计为原子操作，则可能在 unlock 时，刚好就失去了时间片，而后 threadB 进行了修改，threadA 再进入了阻塞状态，就再也无法被唤醒了。
+
 当然如果上面的 threadB 终究是先于 threadA 执行，那么对于 threadA 来说，此时的 ready 值为 true，因此不会再调用`pthread_cond_wait`函数，也就不会进入阻塞状态了，不过这个信号也就丢失了
 #### 示例代码
 ```cpp
@@ -953,7 +955,7 @@ int main()
 #### 初始化
 ```cpp
 int pthread_rwlock_init(pthread_rwlock_t* rwlock, const pthread_rwlockattr_t* attr); // 属性一般为NULL即可
-或者:
+// 或者:
 pthread_rwlock_t myrwlock = PTHREAD_RWLOCK_INITIALIZED;
 ```
 #### 属性设置
@@ -971,7 +973,7 @@ enum
     // 写者优先
     PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP,
 
-    PTHREAD_RWLOCK_DEFAULT_NP = PTHREAD_RWLOCK_PREFER_READER_NP （默认属性，依然是读者优先）
+    PTHREAD_RWLOCK_DEFAULT_NP = PTHREAD_RWLOCK_PREFER_READER_NP //（默认属性，依然是读者优先）
 }
 
 // 属性初始化和销毁
@@ -1059,25 +1061,25 @@ windows 平台和 linux 平台通用
 ```cpp
 lock_guard      // 基于作用域的互斥体管理,即使用{}划定范围,当调用时会自动调用 std::mutex 的lock方法,当出了作用域时会自动调用 std::mutex 的unlock方法
 // 示例：
-// sd::mutex m;
-// std::lock_guard<std::mutex> guard(m);
+sd::mutex m;
+std::lock_guard<std::mutex> guard(m);
         
 unique_lock     // 灵活的互斥体管理,可以转让控制权等，用在条件变量的wait时，因为锁要在wait内部释放，所以需要转让管理权。同时读写锁的写锁也是通过他管理
 // 示例：
-// std::mutex m;
-// std::unique_lock<std::mutex> unique(m);
-// std::shared_mutex m2;
-// std::unique_lock<std::shared_mutex> unique2(m2);
+std::mutex m;
+std::unique_lock<std::mutex> unique(m);
+std::shared_mutex m2;
+std::unique_lock<std::shared_mutex> unique2(m2);
 
 shared_lock     // 共享互斥体管理，只适用于读写锁里面的读锁
 // 示例：
-// std::shared_mutex m;
-// std::shared_lock<std::shared_mutex> shared(m);
+std::shared_mutex m;
+std::shared_lock<std::shared_mutex> shared(m);
 
 scoped_lock     // 多互斥体避免死锁管理，可以同时申请多个互斥体，并且不会造成死锁
 // 示例：
-// std::mutex m1, m2;
-// std::scoped_lock<std::mutex, std::mutex> scoped(m1, m2);
+std::mutex m1, m2;
+std::scoped_lock<std::mutex, std::mutex> scoped(m1, m2);
 
 void fun()
 {
@@ -1123,7 +1125,7 @@ int main()
 ```cpp
 lock / unlock // 用来获取写锁和解除写锁(排他锁)
 lock_shared / unlock_shared // 用来获取读锁和解除读锁(共享锁)
-unique_lock(写锁) 和 shared_lock(读锁) // 用来以RAII方式自动对std::shared_mutex加锁和解锁
+unique_lock / shared_lock // 用来以RAII方式自动对std::shared_mutex加锁和解锁
 ```
 #### 示例代码
 ```cpp
