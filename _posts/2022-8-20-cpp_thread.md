@@ -438,14 +438,14 @@ int pthread_mutexattr_gettype(const pthread_mutexattr_t* restrict attr, int* res
     可重入锁，不同线程必须等锁被释放之后才能再次加锁
 
     **同一个线程重复加锁会使锁的引用计数+1，每次调用解锁则是引用计数-1，因此需要成对出现**
-    
+
 #### 销毁
 ```cpp
 int pthread_mutex_destory(pthread_mutex_t* mutex); // 执行成功会返回0
 ```
 需要注意两点：
 
-1. 无须销毁 **PTHREAD_MUTEX_INITIALIZER **初始化的互斥体;
+1. 无须销毁 **PTHREAD_MUTEX_INITIALIZER** 初始化的互斥体;
 2. 如果主动调用`pthread_mutex_destory`销毁一个正在被使用的锁（包括应用在`pthread_cond_wait`），那么会返回`EBUSY`错误码。而如果正在被使用的`mutex`对象被销毁了，那么会造成不可预测的后果，例如线程是以`detach`的方式运行而保存了主线程的局部`mutex`对象引用
 
 #### 加锁解锁
