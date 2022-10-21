@@ -524,6 +524,33 @@ int main()
       <td>sys/sem.h</td>
    </tr>
    <tr>
+      <td></td>
+      <td>a</td>
+      <td>b</td>
+      <td>c</td>
+   </tr>
+   <tr>
+      <td></td>
+      <td>d</td>
+      <td>e</td>
+      <td>f</td>
+   </tr>
+</table>
+
+<table>
+   <tr>
+      <td>功能</td>
+      <td>有名信号量</td>
+      <td>无名信号量</td>
+      <td>System V信号量</td>
+   </tr>
+   <tr>
+      <td>头文件</td>
+      <td>semaphore.h</td>
+      <td>semaphore.h</td>
+      <td>sys/sem.h</td>
+   </tr>
+   <tr>
       <td>初始化</td>
       <td>"sem_t *sem_open(const char *name, int oflag, ...);</td>
    </tr>
