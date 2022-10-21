@@ -204,9 +204,9 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 ```
 
 - pthread_t *thread：pthread_t 本质上是一个32位的无符号整数，当创建成功之后，可通过该参数得到对应的线程ID
-- const pthread_attr_t *attr：指定了线程的属性，一般为NULL
-- void _(_start_routine) (void *)：目标线程函数，这个函数的调用方式要是**cdecl（即C风格的调用类型，默认情况下C/C++都是该调用风格；常见还有**stdcall, __fastcall等） 
-   - __cdecl：C/C++默认的缺省方式，函数参数从右至左入栈，且由调用者自行清除这些参数，即生成的二进制可执行代码中都含有对应的清栈代码，因此文件体积会比较大。比方说有一个函数A，那么所有调用A函数的地方都会生成一个相对应的清栈代码
+- const pthread_attr_t *attr：指定了线程的属性，一般为 NULL
+- void _(_start_routine) (void *)：目标线程函数，这个函数的调用方式要是 cdecl（即C风格的调用类型，默认情况下C/C++都是该调用风格；常见还有 stdcall, __fastcall 等） 
+   - __cdecl：C/C++ 默认的缺省方式，函数参数从右至左入栈，且由调用者自行清除这些参数，即生成的二进制可执行代码中都含有对应的清栈代码，因此文件体积会比较大。比方说有一个函数A，那么所有调用A函数的地方都会生成一个相对应的清栈代码
    - __stdcall：函数参数从右至左入栈，被调用函数自行清理内存栈，这样文件体积会小点。
         ```cpp
         void* start_routine(void* args){} // 默认就是__cdecl风格
@@ -224,21 +224,21 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 #include <iostream>
 void threadfunc(void* args)
 {
-    while(1)
-    {
-        sleep(1);
-        std::cout << "Linux thread func" << std::endl;
-        break;
-    }
-    return NULL;
+    while(1)
+    {
+        sleep(1);
+        std::cout << "Linux thread func" << std::endl;
+        break;
+    }
+    return NULL;
 }
 
 int main()
 {
-    pthread_t threadid;
-    pthread_create(&threadid, NULL, threadfunc, NULL);
-    pthread_join(threadid, NULL);
-    return 0;
+    pthread_t threadid;
+    pthread_create(&threadid, NULL, threadfunc, NULL);
+    pthread_join(threadid, NULL);
+    return 0;
 }
 ```
 #### C++11 std::thread类
@@ -248,21 +248,21 @@ int main()
 #include <iostream>
 void threadproc1()
 {
-    std::cout << "C++ std::thread 1" << std::endl;
+    std::cout << "C++ std::thread 1" << std::endl;
 }
 
 void threadproc2(int a, int b)
 {
-    std::cout << "C++ std::thread 2" << std::endl;
+    std::cout << "C++ std::thread 2" << std::endl;
 }
 
 int main()
 {
-    std::thread t1(threadproc1); // 这里是普通函数，因此直接使用函数名即可，函数名就是函数指针，如果是类的成员函数那么要用&A::func
-    std::thread t2(threadproc2, 1, 2); 
-    t1.join(); // 主线程执行到这里会阻塞，直到t1线程执行完毕
-    t2.join(); // 主线程执行到这里会阻塞，直到t2线程执行完毕，这样就可以保证main线程退出时t1和t2线程都已经执行完毕
-    return 0;
+    std::thread t1(threadproc1); // 这里是普通函数，因此直接使用函数名即可，函数名就是函数指针，如果是类的成员函数那么要用&A::func
+    std::thread t2(threadproc2, 1, 2); 
+    t1.join(); // 主线程执行到这里会阻塞，直到t1线程执行完毕
+    t2.join(); // 主线程执行到这里会阻塞，直到t2线程执行完毕，这样就可以保证main线程退出时t1和t2线程都已经执行完毕
+    return 0;
 }
 ```
 **在一个函数体含创建的线程要使用**`**join**`**或者**`**detach**`**，否则当函数执行完毕退出后那么线程就会被销毁。**使用`join`时会阻塞直到对应的线程执行完毕才接着执行后面的操作，因此要注意使用的时机，如：
@@ -328,17 +328,17 @@ void start_fun()
 #include <pthread.h>
 void* thread_proc(void* args)
 {
-    pthread_t* tid1 = (pthread_t*) args; // 输出指向线程的内存地址，不是全系统唯一的，因为可能不同进程共享了同一块内存
-    int tid2 = syscall(SYS_gettid); // 全系统唯一，是LWP的ID（轻量级进程，早期linux系统的线程是通过进程实现的）
-    pthread_t tid3 = pthread_self(); // 输出指向线程的内存地址，不是全系统唯一的，因为可能不同进程共享了同一块内存
+    pthread_t* tid1 = (pthread_t*) args; // 输出指向线程的内存地址，不是全系统唯一的，因为可能不同进程共享了同一块内存
+    int tid2 = syscall(SYS_gettid); // 全系统唯一，是LWP的ID（轻量级进程，早期linux系统的线程是通过进程实现的）
+    pthread_t tid3 = pthread_self(); // 输出指向线程的内存地址，不是全系统唯一的，因为可能不同进程共享了同一块内存
 }
 
 int main()
 {
-    pthread_t tid;
-    pthread_create(&tid, NULL, thread_proc, &tid);
-    pthread_join(tid, NULL);
-    return 0;
+    pthread_t tid;
+    pthread_create(&tid, NULL, thread_proc, &tid);
+    pthread_join(tid, NULL);
+    return 0;
 }
 ```
 #### C++11获取线程ID
@@ -365,43 +365,41 @@ void* threadFunc(Obj* this, void* arg);
 class Thread
 {
 public:
-    Thread(){}
-    ~Thread(){}
-    void Start()
-    {
-        m_stopped = false;
-        m_spThread.reset(new std::thread(&Thread::threadFunc, this, 1, 2)); // 注意,因为调用的是实例对象,因此要主动添加this指针作为参数，这里使用的是类成员函数指针，因此需要使用&Thread::threadFunc
-    }
-    
-    void Stop()
-    {
-        m_stopped = true;
-        if (m_spThread)
-        {
-            if (m_spThread->joinable())
-            {
-                m_spThread->join();
-            }
-        }
-    }
-    
+    Thread(){}
+    ~Thread(){}
+    void Start()
+    {
+        m_stopped = false;
+        m_spThread.reset(new std::thread(&Thread::threadFunc, this, 1, 2)); // 注意,    是类成员函数指针，因此需要使用&Thread::threadFunc
+    }
+    void Stop()
+    {
+        m_stopped = true;
+        if (m_spThread)
+        {
+            if (m_spThread->joinable())
+            {
+                m_spThread->join();
+            }
+        }
+    }
+
 private:
-    void threadFunc(int arg1, int arg2)
-    {
-        while (!m_stopped)
-        {
-            std::cout << "Thread function use instance method." << std::endl;
-        }
-    }
-    
-    std::shared_ptr<std::thread> m_spThread;
-    bool m_stopped;
+    void threadFunc(int arg1, int arg2)
+    {
+        while (!m_stopped)
+        {
+            std::cout << "Thread function use instance method." << std::endl;
+        }
+    }
+    std::shared_ptr<std::thread> m_spThread;
+    bool m_stopped;
 };
 
 int main()
 {
-    Thread myThread;
-    myThread.Start();
+    Thread myThread;
+    myThread.Start();
 }
 ```
 ## 线程同步
@@ -448,6 +446,7 @@ int pthread_mutex_destory(pthread_mutex_t* mutex); // 执行成功会返回0
 
 1. 无须销毁 **PTHREAD_MUTEX_INITIALIZER **初始化的互斥体;
 2. 如果主动调用`pthread_mutex_destory`销毁一个正在被使用的锁（包括应用在`pthread_cond_wait`），那么会返回`EBUSY`错误码。而如果正在被使用的`mutex`对象被销毁了，那么会造成不可预测的后果，例如线程是以`detach`的方式运行而保存了主线程的局部`mutex`对象引用
+
 #### 加锁解锁
 ```cpp
 int pthread_mutex_lock(pthread_mutex_t* mutex); // 尝试加锁，如果失败会一直阻塞
