@@ -58,7 +58,135 @@ rxsi@VM-20-9-debian:~$ ps -AL
 | 线程私有 | 线程共享 |
 | --- | --- |
 | 局部变量<br>函数的参数<br>线程局部变量（TLS）| 全局/静态变量<br>堆上的数据<br>程序代码，任何线程都有权利读取并执行任何代码<br>打开的文件，A线程打开的文件可以由B线程读写 |
-线程局部变量指的是线程中独占的全局变量
+
+### 线程局部存储（TLS，Thread Local Storage）
+使用线程局部存储的目的在于**实现线程独占的全局变量**，从而使线程每次调用能够读取到上次运行的结果，这是局部变量（每次退出对应作用域就销毁）和全局变量（在一个进程中全部线程是共享的）无法实现的。
+#### 实现原理
+先看一段简单的示例代码，从代码的反汇编入手：
+```cpp
+// 代码段1：
+void thread_func()
+{
+    int global_g = 1; 	// mov     DWORD PTR [rbp-4], 1
+    global_g++;			// add     DWORD PTR [rbp-4], 1
+    return;
+}
+// 代码1中 global_g 是局部变量，因此会往栈中压入1，然后再执行+1操作
+
+// 代码段2：
+int global_g = 1;
+void thread_func()
+{
+    global_g++; // mov     eax, DWORD PTR global_g[rip]
+                // add     eax, 1
+                // mov     DWORD PTR global_g[rip], eax
+    return;
+}
+// 代码2中 global_g 是全局变量，因此是从rip存储的指令地址（指向的是全局变量存储区，地址是在编译之后就固定的）中获取到变量，然后+1之后，再写回
+
+// 代码段3：
+thread_local int global_g = 1;
+void thread_func()
+{
+    global_g++; // mov     eax, DWORD PTR fs:global_g@tpoff
+                // add     eax, 1
+                // mov     DWORD PTR fs:global_g@tpoff, eax
+    return;
+}
+// 代码3中 global_g 是根据 FS 寄存器指向的地址再加上一定的偏移量获取到的
+```
+从上面演示的代码可以知道`TLS`的获取是根据`FS`寄存器指向的地址再加上一定的偏移量获取的，`FS`寄存器存储的是当前线程的`TCB`的指针，这个`TCB`块就存储在`task_struct -> thread_struct -> desc_struct`数组，如下源码所示：
+```cpp
+struct task_struct {
+    //... 忽略代码
+    struct thread_struct		thread;
+};
+
+struct thread_struct {
+	/* Cached TLS descriptors: */
+	struct desc_struct	tls_array[GDT_ENTRY_TLS_ENTRIES];
+    //... 忽略代码
+};
+```
+`tls_array`数组的容量为3，分别对应了三个`TLS segment`
+```cpp
+/*
+ * The layout of the per-CPU GDT under Linux:
+ // ..... 忽略
+ *  ------- start of TLS (Thread-Local Storage) segments:
+ *
+ *   6 - TLS segment #1			[ glibc's TLS segment ] // glibc用这个段存储TLS，fs寄存器指向的就是这个段
+ *   7 - TLS segment #2			[ Wine's %fs Win32 segment ]
+ *   8 - TLS segment #3							<=== cacheline #3
+// .... 忽略
+```
+linux 系统通过`do_set_thread_area`函数设置`TLS`，每当发生线程/进程切换时就会进行寄存器的换入与换出
+```cpp
+/*
+ * Set a given TLS descriptor:
+ */
+int do_set_thread_area(struct task_struct *p, int idx,
+		       struct user_desc __user *u_info,
+		       int can_allocate)
+{
+    // .... 忽略代码
+	set_tls_desc(p, idx, &info, 1);
+    // .... 忽略代码
+}
+
+static void set_tls_desc(struct task_struct *p, int idx,
+			 const struct user_desc *info, int n)
+{
+	struct thread_struct *t = &p->thread;
+	struct desc_struct *desc = &t->tls_array[idx - GDT_ENTRY_TLS_MIN];
+	int cpu;
+
+	/*
+	 * We must not get preempted while modifying the TLS.
+	 */
+	cpu = get_cpu();
+
+	while (n-- > 0) {
+		if (LDT_empty(info) || LDT_zero(info))
+			memset(desc, 0, sizeof(*desc));
+		else
+			fill_ldt(desc, info);
+		++info;
+		++desc;
+	}
+
+	if (t == &current->thread)
+		load_TLS(t, cpu); // 将TLS内容载入到CPU中
+
+	put_cpu();
+}
+```
+#### 创建方式
+在 linux 平台提供了两种创建线程局部存储的方式：
+* pthread_keys：
+    ```cpp
+    int pthread_key_create(pthread_key_t* key, void (*destructor)(void*)); 
+    // 函数会调用 pthread_key_create 函数申请一个槽位,返回一个小于1024的无符号整数填入pthread_key_t中, 一共有1024个槽位。记录槽位分配情况的数据结构pthread_keys是进程唯一的
+
+    // destructor是自定义函数指针,函数签名如下:
+    void* destructor(void* value)
+    {
+        // .. 当线程终止时,如果key关联的值不为NULL,则会自动执行该函数,如果无需析构,那么将destructor参数设置为NULL即可
+    }
+
+    int pthread_key_delete(pthread_key_t key); // 删除
+    int pthread_setspecific(pthread_key_t key, const void* value); // 设置值
+    void* pthread_getspecific(pthread_key_t key); // 获取
+    ```
+* __thread：
+    ```cpp
+    __thread int val = xxx; 
+    ```
+在 C++11 中提供了另一种创建方式：
+* thread_local：
+    ```cpp
+    thread_local int val = xxx;
+    ```
 
 ## 常见的线程问题
 ### 1. 主线程退出会使子线程退出吗？
@@ -1196,134 +1324,4 @@ int main()
 
     return 0;
 }
-```
-## 线程局部存储（TLS，Thread Local Storage）
-使用线程局部存储的目的在于**实现线程独占的全局变量**，因此这是栈和寄存器无法实现的（这两个也是每个线程独占的数据）
-### 实现原理
-从代码的反汇编入手：
-```cpp
-// 代码段1：
-void thread_func()
-{
-    int global_g = 1; 	// mov     DWORD PTR [rbp-4], 1
-    global_g++;			// add     DWORD PTR [rbp-4], 1
-    return;
-}
-// 代码1中 global_g 是局部变量，因此会往栈中压入1，然后再执行+1操作
-
-
-// 代码段2：
-int global_g = 1;
-void thread_func()
-{
-    global_g++; // mov     eax, DWORD PTR global_g[rip]
-                // add     eax, 1
-                // mov     DWORD PTR global_g[rip], eax
-    return;
-}
-// 代码2中 global_g 是全局变量，因此是从rip存储的指令地址（指向的是全局变量存储区，地址是在编译之后就固定的）中获取到变量，然后+1之后，再写回
-
-// 代码段3：
-thread_local int global_g = 1;
-void thread_func()
-{
-    global_g++; // mov     eax, DWORD PTR fs:global_g@tpoff
-                // add     eax, 1
-                // mov     DWORD PTR fs:global_g@tpoff, eax
-    return;
-}
-// 代码3中 global_g 是根据 FS 寄存器指向的地址再加上一定的偏移量获取到的
-```
-从上面演示的代码可以知道`TLS`的获取是根据`FS`寄存器指向的地址再加上一定的偏移量获取的。而实际上`FS`寄存器存储的是当前线程的`TCB`的指针，这个`TCB`块就存储在`task_struct`中的`thread_struct`中的`desc_struct`数组中。
-```cpp
-struct task_struct {
-    //... 忽略代码
-    struct thread_struct		thread;
-};
-
-struct thread_struct {
-	/* Cached TLS descriptors: */
-	struct desc_struct	tls_array[GDT_ENTRY_TLS_ENTRIES];
-    //... 忽略代码
-};
-```
-`tls_array`数组的容量为3，分别对应了三个`TLS segment`
-```cpp
-/*
- * The layout of the per-CPU GDT under Linux:
- // ..... 忽略
- *  ------- start of TLS (Thread-Local Storage) segments:
- *
- *   6 - TLS segment #1			[ glibc's TLS segment ] // glibc用这个段存储TLS，fs寄存器指向的就是这个段
- *   7 - TLS segment #2			[ Wine's %fs Win32 segment ]
- *   8 - TLS segment #3							<=== cacheline #3
-// .... 忽略
-```
-linux 系统通过`do_set_thread_area`函数设置`TLS`
-```cpp
-/*
- * Set a given TLS descriptor:
- */
-int do_set_thread_area(struct task_struct *p, int idx,
-		       struct user_desc __user *u_info,
-		       int can_allocate)
-{
-    // .... 忽略代码
-	set_tls_desc(p, idx, &info, 1); // 
-    // .... 忽略代码
-}
-
-
-static void set_tls_desc(struct task_struct *p, int idx,
-			 const struct user_desc *info, int n)
-{
-	struct thread_struct *t = &p->thread;
-	struct desc_struct *desc = &t->tls_array[idx - GDT_ENTRY_TLS_MIN];
-	int cpu;
-
-	/*
-	 * We must not get preempted while modifying the TLS.
-	 */
-	cpu = get_cpu();
-
-	while (n-- > 0) {
-		if (LDT_empty(info) || LDT_zero(info))
-			memset(desc, 0, sizeof(*desc));
-		else
-			fill_ldt(desc, info);
-		++info;
-		++desc;
-	}
-
-	if (t == &current->thread)
-		load_TLS(t, cpu); // 将TLS内容载入到CPU中
-
-	put_cpu();
-}
-```
-### linux平台
-#### pthread_keys
-```cpp
-int pthread_key_create(pthread_key_t* key, void (*destructor)(void*)); 
-// 函数会调用 pthread_key_create 函数申请一个槽位,返回一个小于1024的无符号整数填入pthread_key_t中, 一共有1024个槽位。记录槽位分配情况的数据结构pthread_keys是进程唯一的
-
-// destructor是自定义函数指针,函数签名如下:
-void* destructor(void* value)
-{
-    // .. 当线程终止时,如果key关联的值不为NULL,则会自动执行该函数,如果无需析构,那么将destructor参数设置为NULL即可
-}
-
-
-int pthread_key_delete(pthread_key_t key); // 删除
-int pthread_setspecific(pthread_key_t key, const void* value); // 设置
-void* pthread_getspecific(pthread_key_t key); // 获取
-```
-#### __thread
-```cpp
-__thread int val = xxx; 
-```
-### C++11
-#### thread_local
-```cpp
-thread_local int val = xxx;
 ```
