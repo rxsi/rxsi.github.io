@@ -17,7 +17,7 @@ author: Rxsi
 rxsi@VM-20-9-debian:~$ ulimit -s
 8192
 ```
-## 一个进程最多可以创建多少个线程
+### 一个进程最多可以创建多少个线程
 已知 linux 系统会为每一个线程分配`8MB`的虚拟内存，而 32 位系统中，系统最大内存是 4GB，用户区被分配了 3GB 空间，因此理论上可以创建的线程总数为`3GB / 8MB ≈ 300`。而在 64 位系统中，系统最大内存为 2<sup>64</sup>，用户区占用了 128TB，所以理论上可以创建的线程数是无限的（1000多万），不过我们实际装机的物理内存一般也就是几十G，所以首先物理内存方面就不支持创建那么多的线程。
 
 线程的创建实际还受到几个内核参数的限制：
@@ -119,7 +119,8 @@ struct thread_struct {
  *   6 - TLS segment #1			[ glibc's TLS segment ] // glibc用这个段存储TLS，fs寄存器指向的就是这个段
  *   7 - TLS segment #2			[ Wine's %fs Win32 segment ]
  *   8 - TLS segment #3							<=== cacheline #3
-// .... 忽略
+ // .... 忽略
+*/
 ```
 linux 系统通过`do_set_thread_area`函数设置`TLS`，每当发生线程/进程切换时就会进行寄存器的换入与换出
 ```cpp
@@ -260,12 +261,12 @@ int main()
 {
     std::thread t1(threadproc1); // 这里是普通函数，因此直接使用函数名即可，函数名就是函数指针，如果是类的成员函数那么要用&A::func
     std::thread t2(threadproc2, 1, 2); 
-    t1.join(); // 主线程执行到这里会阻塞，直到t1线程执行完毕
+    t1.join(); // 主线程执行到这里会阻塞，直到t1线程执行完毕，注意此时t2是已经在运行的了！！！
     t2.join(); // 主线程执行到这里会阻塞，直到t2线程执行完毕，这样就可以保证main线程退出时t1和t2线程都已经执行完毕
     return 0;
 }
 ```
-**在一个函数体含创建的线程要使用**`**join**`**或者**`**detach**`**，否则当函数执行完毕退出后那么线程就会被销毁。**使用`join`时会阻塞直到对应的线程执行完毕才接着执行后面的操作，因此要注意使用的时机，如：
+**在一个函数体含创建的线程要使用`join`或者`detach`，否则当函数执行完毕退出后那么线程就会被销毁。**使用`join`时会阻塞直到对应的线程执行完毕才接着执行后面的操作，因此要注意使用的时机，如：
 ```cpp
 void start_fun()
 {
@@ -283,7 +284,7 @@ void start_fun()
     std::vector<std::thread> threads;
     for (int i = 0; i < 5; ++i)
     {
-        threads.emplace_back(std::thread(theradproc1));
+        threads.emplace_back(std::thread(threadproc1));
     }
     for (int i = 0; i < 5; ++i)
     {
@@ -291,7 +292,7 @@ void start_fun()
     }
 }
 ```
-这种方式线程实际就是并发执行，但是函数栈会等待所有线程执行完毕之后才退出
+这种方式线程实际就是并发执行，但是`start_fun`的函数栈会等待所有线程执行完毕之后才退出
 
 使用`detach`则代表的是把线程独立到后台执行，函数所在线程会失去对该线程的控制权，因此函数栈可以在创建完线程之后就退出，不会影响创建线程的执行。但是这种方式要避免使用，因为如果函数栈有传递局部变量到对应创建的线程中，那么当函数栈退出之后，该变量会被销毁，当线程访问时将会造成不可预期的后果。
 ```cpp
@@ -357,10 +358,9 @@ void* threadFunc(void* arg);
 ```cpp
 void* threadFunc(Obj* this, void* arg);
 ```
-不符合linux函数签名，因此**只能把线程函数定义为静态方法**
+不符合linux函数签名，因此在 C++ 中使用 linux 平台的线程调用函数时，需要把线程函数定义为静态方法。
 ### C++ std::thread类没有函数签名的限制
-**对于实例方法，需要添加this指针，或者使用std::bind()函数**
-对于静态方法，则不需要
+对于实例方法，需要添加this指针，或者使用std::bind()函数做一层封装，注意如果是静态函数是不需要添加`this`指针的。
 ```cpp
 class Thread
 {
@@ -370,7 +370,7 @@ public:
     void Start()
     {
         m_stopped = false;
-        m_spThread.reset(new std::thread(&Thread::threadFunc, this, 1, 2)); // 注意,    是类成员函数指针，因此需要使用&Thread::threadFunc
+        m_spThread.reset(new std::thread(&Thread::threadFunc, this, 1, 2)); // 注意, 这是类成员函数指针，因此需要使用&Thread::threadFunc
     }
     void Stop()
     {
@@ -425,19 +425,20 @@ int pthread_mutexattr_gettype(const pthread_mutexattr_t* restrict attr, int* res
 可选属性有：
 
 1. `PTHREAD_MUTEX_NORMAL`
-
-普通锁，不同线程只有该锁被释放之后才能再被获取
-**如果同一个线程连续加锁会导致阻塞在第二个加锁语句，而如果使用的是 trylock，则返回 EBUSY 错误码**
+    普通锁，不同线程只有该锁被释放之后才能再被获取
+    
+    **如果同一个线程连续加锁会导致阻塞在第二个加锁语句，而如果使用的是 trylock，则返回 EBUSY 错误码**
 
 2. `PTHREAD_MUTEX_ERRORCHECK`
-
-检错锁，不同线程只有该锁被释放之后才能再被获取
-**如果同一个线程连续加锁会返回 EDEADLK 错误码**
+    检错锁，不同线程只有该锁被释放之后才能再被获取
+    
+    **如果同一个线程连续加锁会返回 EDEADLK 错误码**
 
 3. `PTHREAD_MUTEX_RECURSIVE`
+    可重入锁，不同线程必须等锁被释放之后才能再次加锁
 
-可重入锁，不同线程必须等锁被释放之后才能再次加锁
-**同一个线程重复加锁会使锁的引用计数+1，每次调用解锁则是引用计数-1，因此需要成对出现**
+    **同一个线程重复加锁会使锁的引用计数+1，每次调用解锁则是引用计数-1，因此需要成对出现**
+    
 #### 销毁
 ```cpp
 int pthread_mutex_destory(pthread_mutex_t* mutex); // 执行成功会返回0
