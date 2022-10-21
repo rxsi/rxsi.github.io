@@ -13,12 +13,12 @@ author: Rxsi
 # CPU架构
 现在处理器架构一般为下图的结构：
 
-![cpu_structure.png](/images/c%2B%2B_atomic_volatile/cpu_structure.png)
+![cpu_structure.png](/images/cpp_atomic_volatile/cpu_structure.png)
 <!--more-->
 ## 缓存一致性
 在多核结构下，每个核心有多级独占的 cache 高速缓冲，通常为了保证缓冲间数据的一致性，因此有了 **MESI协议**。该协议通过把 cacheline 标记为4个状态之一，形成状态机，从而保证缓存一致性。状态转换如下图：
 
-![MESI.png](/images/c%2B%2B_atomic_volatile/MESI.png)
+![MESI.png](/images/cpp_atomic_volatile/MESI.png)
 
 注：如果发生不同核心同时对某个变量进行相同操作，则总线会参与仲裁协调，以保证只有其中一个核的操作有效
 ## 内存一致性（内存模型）
@@ -38,17 +38,17 @@ CPU 与内存之间的数据传输关系可以归纳为：
 多核之间的数据同步是通过 **MESI** 协议同步的，但是缓存的一致性消息传递是要时间的，这就使其切换时会产生延迟。当一个缓存被切换状态时其他缓存收到消息完成各自的切换并且发出回应消息这么一长串的时间中 CPU 都会等待所有缓存响应完成。可能出现的阻塞都会导致各种各样的性能问题和稳定性问题。
 比方说 CPU0 准备对 变量a 进行写操作，根据 MESI协议 它会向其他所有的核心发送消息，使其他核心的 cacheline 如果有保存变量 a 则标记为 **Invalid**，并返回 Ack 信息，此时 CPU0 才会对变量进行 Modify 操作。这个过程，CPU0 就会阻塞等待到消息返回才会进行下一步的处理。
 
-![no_store_buffer.png](/images/c%2B%2B_atomic_volatile/no_store_buffer.png)
+![no_store_buffer.png](/images/cpp_atomic_volatile/no_store_buffer.png)
 
 当 CPU0 准备对 变量a 写操作时，其实其他核心保存的 变量a 信息已经无关紧要了，毕竟都会被重新覆盖掉，而目前的设计中会使 CPU0 一直阻塞直到收到 Ack 回复。 为了避免这种 CPU 运算能力的浪费，Store Bufferes 被引入使用。处理器把它想要写入到主存的值写到缓存，然后继续去处理其他事情，直到收到 Ack 信息，再把数据写回到内存。
 
-![store_buffer.png](/images/c%2B%2B_atomic_volatile/store_buffer.png)
+![store_buffer.png](/images/cpp_atomic_volatile/store_buffer.png)
 
 ## Store Forwarding
 在引入 store buffer 前，load、store 操作都是 CPU 直接与 cache 交互，因此单核 CPU 上程序的执行流程符合 program order。但是 引入 store buffer 之后，由于 store 操作可能缓存在 buffer 中，因此打乱了单核 store-load 的执行顺序。
 为了解决这个问题，引入了 store forwarding，当 CPU 执行 load 操作时，不但要看 cache，还要看 store buffer 中的内容，当buffer 中有数据时，则采用该数据。
 
-![store_forwarding.png](/images/c%2B%2B_atomic_volatile/store_forwarding.png)
+![store_forwarding.png](/images/cpp_atomic_volatile/store_forwarding.png)
 
 ## Invalidate Queues
 引入 Store buffer 之后，解决了发送端 CPU 等待 ACK 信息而阻塞的问题，但是当接收端 CPU 无法及时处理发送端信息（Invalidate Message，使本 CPU 的 cacheline 数据状态转变为 Invalid）时，最终会导致发送端 CPU 的 store buffer 因不能及时接收到 ACK 信息而最终被塞满。
@@ -58,7 +58,7 @@ CPU 与内存之间的数据传输关系可以归纳为：
 
 总的来说就是各 CPU 核心在处理 Store、Load 指令时，可能存在重排的现象（乱序执行，对于本核来说乱序执行之后的结果仍是正确的，但是对于其他核依赖于这份数据的则会造成异常），归纳为 **Load-Store、Store-Load、Load-Load、Store-Store** 这四种乱序结果。不同架构的处理器有不同的内存模型（CPU MEMORY MODEL），在不同的数据模型下对于 **Load/Store** 操作的顺序有着不同的处理方式，概括如下：
 
-![memory_order.png](/images/c%2B%2B_atomic_volatile/memory_order.png)
+![memory_order.png](/images/cpp_atomic_volatile/memory_order.png)
 
 此外，在 **单核CPU** 下，**单次**的 Load 和 Store 在满足 **内存对齐** 的条件下是原子的，不需要额外加锁。如`int a = 1`具有原子性，而`a++`则是多次内存访问，不具有原子性。
 **内存对齐的意义：**
