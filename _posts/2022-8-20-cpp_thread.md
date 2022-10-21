@@ -182,6 +182,7 @@ static void set_tls_desc(struct task_struct *p, int idx,
     ```cpp
     __thread int val = xxx; 
     ```
+
 在 C++11 中提供了另一种创建方式：
 * thread_local：
     ```cpp
