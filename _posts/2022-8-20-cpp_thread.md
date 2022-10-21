@@ -525,7 +525,7 @@ int main()
    </tr>
    <tr>
       <td>初始化</td>
-      <td>sem_t *sem_open(const char *name, int oflag, ...);<br>/* mode_t mode, unsigned int value*/"</td>
+      <td>sem_t *sem_open(const char *name, int oflag, ...);/* mode_t mode, unsigned int value*/"</td>
       <td>int sem_init(sem_t* sem, int pshared, unsigned int value);</td>
       <td>int semget(key_t key, int nsems, int oflag);</td>
    </tr>
@@ -538,82 +538,41 @@ int main()
    </tr>
    <tr>
       <td></td>
-      <td>"返回：</td>
-   </tr>
-   <tr>
-      <td>成功返回指向信号量的指针，出错返回SEM_FAILED"</td>
-      <td>"返回：</td>
-   </tr>
-   <tr>
-      <td>出错返回-1"</td>
-      <td>"返回：</td>
-   </tr>
-   <tr>
-      <td>成功返回非负标识符，出错返回-1"</td>
+      <td>返回：<br>成功返回指向信号量的指针，出错返回SEM_FAILED</td>
+      <td>返回：<br>出错返回-1</td>
+      <td>返回：<br>成功返回非负标识符，出错返回-1"</td>
    </tr>
    <tr>
       <td></td>
+      <td>说明：<br>用以创建一个新的有名信号量或者打开一个已经存在的有名信号量，可用于进程/线程间同步</td>
+      <td>说明：<br>基于内存的信号量，具体的持续性取决于底层的内存类型，如共享内存类型的会一直持续直到主动释放</td>
+      <td>说明：当创建信号集之后， 内核会维护semid_ds结构体（可以同时包含多个信号量），存储信号量的访问权限、信号值等。</td>
       <td></td>
       <td></td>
       <td></td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>说明：</td>
-      <td>说明：</td>
-      <td>说明：</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>用以创建一个新的有名信号量或者打开一个已经存在的有名信号量，可用于进程/线程间同步</td>
-      <td>基于内存的信号量，具体的持续性取决于底层的内存类型，如共享内存类型的会一直持续直到主动释放</td>
-      <td>当创建信号集之后， 内核会维护semid_ds结构体（可以同时包含多个信号量），存储信号量的访问权限、信号值等。</td>
    </tr>
    <tr>
       <td>信号量减少</td>
-      <td>int sem_wait(sem_t *sem);</td>
+      <td>int sem_wait(sem_t *sem);<br>int sem_trywait(sem_t *sem);</td>
       <td></td>
       <td>int semop(int semid, struct sembuf *opsptr, size_t nops);</td>
    </tr>
    <tr>
       <td></td>
-      <td>int sem_trywait(sem_t *sem);</td>
+      <td>参数：<br>sem_t *sem：信号量指针"</td>
       <td></td>
-      <td></td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>参数：</td>
       <td></td>
       <td></td>
    </tr>
    <tr>
       <td></td>
-      <td>sem_t *sem：信号量指针</td>
+      <td>返回：<br>成功返回0，出错返回-1"</td>
       <td></td>
-      <td></td>
+      <td>参数：<br>struct sembuf *opsptr：指向sembuf数组<br>size_t nops：表明opsptr所指向的数组的大小</td>
    </tr>
    <tr>
       <td></td>
-      <td>返回：</td>
-      <td></td>
-      <td>参数：</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>成功返回0，出错返回-1</td>
-      <td></td>
-      <td>struct sembuf *opsptr：指向sembuf数组</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>说明：</td>
-      <td></td>
-      <td>size_t nops：表明opsptr所指向的数组的大小</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>当信号量大于0时，调用上述方法会使信号量减一，然后返回；如果信号量为0，sem_wait会阻塞等待，而sem_trywait会立即返回，且errno=EAGAIN。阻塞等待的过程中可能会被其他信号中断，且errno=EINTR，所以要用while循环等待</td>
+      <td>说明：<br>当信号量大于0时，调用上述方法会使信号量减一，然后返回；如果信号量为0，sem_wait会阻塞等待，而sem_trywait会立即返回，且errno=EAGAIN。阻塞等待的过程中可能会被其他信号中断，且errno=EINTR，所以要用while循环等待</td>
       <td></td>
       <td></td>
    </tr>
@@ -621,47 +580,27 @@ int main()
       <td>信号量增加</td>
       <td>int sem_post(sem_t *sem);</td>
       <td></td>
-      <td>返回：</td>
+      <td>返回：<br>成功返回0，出错返回-1</td>
    </tr>
    <tr>
       <td></td>
-      <td>参数：</td>
+      <td>参数：<br>sem_t *sem：信号量指针</td>
       <td></td>
-      <td>成功返回0，出错返回-1</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>sem_t *sem：信号量指针</td>
       <td></td>
       <td></td>
    </tr>
    <tr>
       <td></td>
-      <td>返回：</td>
+      <td>返回：<br>成功返回0，出错返回-1</td>
       <td></td>
-      <td>说明：</td>
+      <td>说明：<br>用来对信号集执行PV操作<br>P：申请资源，信号-1<br>V：释放资源，信号+1</td>
+      <td></td>
+      <td></td>
    </tr>
    <tr>
       <td></td>
-      <td>成功返回0，出错返回-1</td>
+      <td>说明：<br>当一个线程/进程用完当前的信号后，要调用sem_post方法，使信号量+1，然后就会唤醒其他正在等待信号的其他线程/进程</td>
       <td></td>
-      <td>用来对信号集执行PV操作</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td>P：申请资源，信号-1</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>说明：</td>
-      <td></td>
-      <td>V：释放资源，信号+1</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>当一个线程/进程用完当前的信号后，要调用sem_post方法，使信号量+1，然后就会唤醒其他正在等待信号的其他线程/进程</td>
       <td></td>
       <td></td>
    </tr>
@@ -673,119 +612,63 @@ int main()
    </tr>
    <tr>
       <td></td>
-      <td>参数：</td>
+      <td>参数：<br>sem_t *sem：信号量指针<br>int *valp：整数指针，用以存储当前的信号量值</td>
+      <td></td>
       <td></td>
       <td></td>
    </tr>
    <tr>
       <td></td>
-      <td>sem_t *sem：信号量指针</td>
+      <td>返回：<br>成功返回0，失败返回-1</td>
+      <td></td>
+      <td>参数：<br>int semid：非负的信号标识符；<br>int semmum：信号量集内的某个成员（0、1...nsems-1），只有当cmd为GETVAL、SETVAL、GETNCNT、GETZCNT、GETPID时有效；<br>int cmd：指定了semctl的行为，常见项有：GETVAL、SETVAL、GETNCNT、GETZCNT、GETPID等；<br>union semun arg：可选参数，取决于cmd类型，该结构体需要程序自定义</td>
       <td></td>
       <td></td>
    </tr>
    <tr>
       <td></td>
-      <td>int *valp：整数指针，用以存储当前的信号量值</td>
+      <td>说明：<br>如果当前信号量已经上锁，则返回值为0，或为某个负数，其绝对值就是等待该信号量解锁的线程数</td>
       <td></td>
-      <td></td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>返回：</td>
-      <td></td>
-      <td>参数：</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>成功返回0，失败返回-1</td>
-      <td></td>
-      <td>int semid：非负的信号标识符</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td>int semmum：信号量集内的某个成员（0、1...nsems-1），只有当cmd为GETVAL、SETVAL、GETNCNT、GETZCNT、GETPID时有效</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td>int cmd：指定了semctl的行为，常见项有：</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td>GETVAL、SETVAL、GETNCNT、GETZCNT、GETPID等</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>说明：</td>
-      <td></td>
-      <td>union semun arg：可选参数，取决于cmd类型，该结构体需要程序自定义</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>如果当前信号量已经上锁，则返回值为0，或为某个负数，其绝对值就是等待该信号量解锁的线程数</td>
       <td></td>
       <td></td>
    </tr>
    <tr>
       <td>关闭</td>
-      <td>int sem_close(sem_t *sem);</td>
+      <td>int sem_close(sem_t *sem);<br>int sem_unlink(const char *name);</td>
       <td>int sem_destory(sem_t *sem);</td>
-      <td>返回：</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>int sem_unlink(const char *name);</td>
-      <td></td>
-      <td>成功返回非负数，出错返回-1</td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>参数：</td>
-      <td>参数：</td>
+      <td>返回：<br>成功返回非负数，出错返回-1</td>
       <td></td>
    </tr>
    <tr>
       <td></td>
-      <td>sem_t *sem：信号量指针</td>
-      <td>sem_t *sem：信号量指针</td>
+      <td>参数：<br>sem_t *sem：信号量指针；<br>const char *name：路径名</td>
+      <td>参数：<br>sem_t *sem：信号量指针</td>
       <td></td>
-   </tr>
-   <tr>
-      <td></td>
-      <td>const char *name：路径名</td>
       <td></td>
       <td></td>
    </tr>
    <tr>
       <td></td>
-      <td>返回：</td>
-      <td>返回：</td>
-      <td>说明：</td>
+      <td>返回：<br>成功返回0，出错返回-1</td>
+      <td>返回：<br>成功返回0，出错返回-1</td>
+      <td>说明：<br>用来对单个信号或者整个信号集执行操作</td>
    </tr>
    <tr>
       <td></td>
-      <td>成功返回0，出错返回-1</td>
-      <td>成功返回0，出错返回-1</td>
-      <td>用来对单个信号或者整个信号集执行操作</td>
-   </tr>
-   <tr>
+      <td>说明：<br>当一个进程终止时，内核会对其打开着的有名信号量自动执行sem_close方法，但是只有当执行了sem_unlink时才会真正删除，且当该有名信号量的引用计数大于0时，不会调用析构。</td>
+      <td>说明：释放信号量</td>
       <td></td>
-      <td>说明：</td>
-      <td>说明：</td>
       <td></td>
    </tr>
    <tr>
       <td></td>
-      <td>当一个进程终止时，内核会对其打开着的有名信号量自动执行sem_close方法，但是只有当执行了sem_unlink时才会真正删除，且当该有名信号量的引用计数大于0时，不会调用析构。</td>
-      <td>释放信号量</td>
       <td></td>
-   </tr>
-   <tr>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
       <td></td>
    </tr>
 </table>
