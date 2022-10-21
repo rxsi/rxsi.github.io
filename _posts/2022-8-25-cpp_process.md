@@ -34,52 +34,62 @@ COMMAND     PID USER   FD   TYPE    DEVICE SIZE/OFF    NODE NAME
 blocking_ 30165 rxsi    0u   CHR     136,2      0t0       5 /dev/pts/2
 blocking_ 30165 rxsi    1u   CHR     136,2      0t0       5 /dev/pts/2
 blocking_ 30165 rxsi    2u   CHR     136,2      0t0       5 /dev/pts/2
-blocking_ 30165 rxsi    3u  IPv4 255333517      0t0     TCP *:3000 (LISTEN)
+blocking_ 30165 rxsi    3u  IPv4   2553317      0t0     TCP *:3000 (LISTEN)
 ```
+<!--more-->
 ## 进程的状态
-进程总共有 7 种状态，如下图所示：
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1660095615462-f0c2e67b-3e6e-4f51-bb1d-03a4558b5cd7.png#clientId=u5840d925-f322-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=373&id=ua196915b&margin=%5Bobject%20Object%5D&name=image.png&originHeight=722&originWidth=1166&originalType=url&ratio=1&rotation=0&showTitle=false&size=257065&status=done&style=none&taskId=u8d4b339a-5fef-4853-9917-77b2af43c53&title=&width=602)
-**当进程处于挂起状态时将会被换出到磁盘，导致进程挂起的原因主要包括以下几点：（对应 top 指令显示的进程状态的 T 状态）**
+进程总共有 7 种状态，我们可以通过`top`或`ps`指令进行查看，状态转换如下图所示：
 
+![seven_process_status.png](/images/cpp_process/seven_process_status.png)
+
+**当进程处于挂起状态时将会被换出到磁盘**，导致进程挂起的原因主要包括以下几点：（对应 top 指令显示的进程状态的 T 状态）
 - 通过 sleep 让进程间歇性挂起，其工作原理是设置一个定时器，到期后唤醒进程。
 - 用户希望挂起一个程序的执行，比如在 Linux 中用 Ctrl+Z 挂起进程；
+
 ## 进程调度算法
 ### 先来先服务调度算法
-这是一种**非抢占式**的算法，当进程被创建放到就绪队列时，依照先后顺序排序，而当可以唤醒进程时则根据队列顺序依次唤醒进程，直到该进程退出或者被阻塞，才会选择下一个继续运行。
-**这种方式的缺点是当有一个长作业的进程运行时，将会导致后面的短作业等待时间变长**
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1660099152781-ce0ba74a-ee16-4732-a497-ba9e4674a596.png#clientId=uebd53ce7-876a-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=129&id=u30b865e1&margin=%5Bobject%20Object%5D&name=image.png&originHeight=182&originWidth=986&originalType=url&ratio=1&rotation=0&showTitle=false&size=29794&status=done&style=none&taskId=u39988e41-1b14-4231-831e-25fe0c3f152&title=&width=701)
+这是一种**非抢占式**的算法，当进程被创建放到就绪队列时，依照先后顺序排序，而当可以唤醒进程时则根据队列顺序依次唤醒进程，直到该进程退出或者被阻塞，才会选择下一个继续运行。**这种方式的缺点是当有一个长作业的进程运行时，将会导致后面的短作业等待时间变长**
+
+![first_in_first_service.png](/images/cpp_process/first_in_first_service.png)
+
 ### 最短作业优先调度算法
-这种算法是一种**抢占式**的算法，是优先选择运行时间最短的进程来执行，因此有助于提升系统的吞吐量
-**这种方案的缺点是长作业进程获得运行的几率小**
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1660099317227-c868c33e-85ac-468d-a777-483c99f6e17d.png#clientId=uebd53ce7-876a-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=u87046952&margin=%5Bobject%20Object%5D&name=image.png&originHeight=267&originWidth=1037&originalType=url&ratio=1&rotation=0&showTitle=false&size=44189&status=done&style=none&taskId=u76261ed4-769e-4e33-9f13-343dcad389b&title=)
+这种算法是一种**抢占式**的算法，是优先选择运行时间最短的进程来执行，因此有助于提升系统的吞吐量。**这种方案的缺点是长作业进程获得运行的几率小**
+
+![shortest_work_time.png](/images/cpp_process/shortest_work_time.png)
+
 ### 高响应比优先调度算法
 这种算法也是一种**抢占式**的算法，权衡了短作业和长作业的运行，采用计算响应比优先级的方式：
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1660100073758-72b05a5c-a627-4ede-9b2f-bc3b62ff3d4b.png#clientId=uebd53ce7-876a-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=u20e4361e&margin=%5Bobject%20Object%5D&name=image.png&originHeight=173&originWidth=572&originalType=url&ratio=1&rotation=0&showTitle=false&size=50692&status=done&style=none&taskId=uecb90992-5d4f-488d-a8f6-838e58b0ec4&title=)
+
+![hightest_priority.png](/images/cpp_process/hightest_priority.png)
 
 - 等待时间相等时，短作业因为要求服务时间更短，因此优先级更高，获得运行的优先级更大
-- 因为上面已经说了在同等时间下短作业具有更大的优先级，因此长作业往往会等待更长的时间，根据公式可知优先级会随等待时间增长而增加，因此长作业也可以获得运行机会
+- 因为在同等时间下短作业具有更大的优先级，因此长作业往往会等待更长的时间，而随着时间的推进优先级会随等待时间增长而增加，因此长作业也可以获得运行机会
+
 ### 时间片转轮调用算法
 这是一种**非抢占式**的算法，每个进程被分配了**相等**的时间片运行时间
 
 - 如果时间片用完，则进行停止，并发生切换
 - 如果进程在时间片用完之前就阻塞或者结束了，则发生切换（遇到阻塞就切换是非抢占式的）
 
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1660100921082-34d0b16e-22c5-45ef-86db-677e55b47507.png#clientId=uebd53ce7-876a-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=u6ac7cb70&margin=%5Bobject%20Object%5D&name=image.png&originHeight=279&originWidth=768&originalType=url&ratio=1&rotation=0&showTitle=false&size=44326&status=done&style=none&taskId=u1021b3bb-4060-4ba8-b924-f0dae7364e8&title=)
+![time_pieces.png](/images/cpp_process/time_pieces.png)
+
 ### 最高优先级调度算法
-这是一种**抢占式**的算法，这种算法是优先运行优先级高的进程，所以需要为每个进程设定优先级别，而优先级别也可以分为静态优先级和动态优先级
-**这种算法的缺点是会使低优先级获得运行的几率低**
+这是一种**抢占式**的算法，这种算法是优先运行优先级高的进程，所以需要为每个进程设定优先级别，而优先级别也可以分为静态优先级和动态优先级。**这种算法的缺点是会使低优先级获得运行的几率低**
+
 ### 多级反馈队列调度算法
 该算法是一种**抢占式**的算法，是时间片转轮算法和最高优先级算法的综合，同时兼顾了长短作业，同时也能保持较好的响应时间
 
 - 多级：表示有多个队列，每个队列的优先级从高到低，同时优先级越高的时间片越短
 - 反馈：表示如果有新的进程加入优先级高的队列时，立即停止当前正在运行的低优先级进程，转而先去运行高优先级的队列
 
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1660101702924-1fbf7b58-0c03-4e38-8dbf-b426e391151c.png#clientId=uebd53ce7-876a-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=ufb3ba46d&margin=%5Bobject%20Object%5D&name=image.png&originHeight=650&originWidth=878&originalType=url&ratio=1&rotation=0&showTitle=false&size=122021&status=done&style=none&taskId=u5877d375-5256-40e9-a473-d9dcaf73ed2&title=)
+![multi_time_pieces.png](/images/cpp_process/multi_time_pieces.png)
+
 运行的方式是：
 
 - 设置多个队列，队列的优先级从高到低，而时间片则是由短到长
 - 新进程在被加入时，会首先放到第一级的就绪队列对位，然后按序运行。此队列的优先级最高，而时间片却最短，这样如果是短作业的进程则会立即运行完，而长作业如果没能成功运行完，则会放到下一级的队列。
 - 当高优先级队列为空时，才会调用低优先级的队列的进程。如果低优先级队列在运行时，高优先级的队列有进程进入，则会立即中断，转而运行高优先级的进程。
+
 ## 进程的基本操作
 ### system函数
 `system`函数是为了启动一个新的进程以`shell`脚本的形式执行指令，等价于执行`sh -c string`。新的进程与原进程不共享数据，**本质是先执行**`**fork**`**函数创建子进程再由子进程执行**`**exec**`**函数，并且父进程会使用**`**waitpid**`**等待子进程运行结束，因此这个过程是阻塞的。**
