@@ -597,11 +597,11 @@ int main()
     {
         int fd = open(FILEPATH, O_WRONLY|O_TRUNC);
         char buf1[] = "aaaaa";
-        writeFunc(fd, &buf1); // 先写入了aaaaaaaaa
+        writeFunc(fd, &buf1); // 先写入了aaaaa
         std::this_thread::sleep_for(std::chrono::seconds(2));
         lseek(fd, 0, SEEK_SET);
         char buf2[] = "bbbbb";
-        writeFunc(fd, &buf2); // 再从头写入bbbbbbbbb
+        writeFunc(fd, &buf2); // 再从头写入bbbbb
     }
     else
     {
