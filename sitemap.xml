@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<!-- created with Free Online Sitemap Generator www.xml-sitemaps.com -->
+
+
+<url>
+  <loc>https://rxsi.github.io/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>1.00</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/archive/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/category/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/tag/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/about/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/10/19/io_read_write_file/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/09/19/tcp_wave_4/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/09/17/tcp_wave_3/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/09/14/tcp_wave_2/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/09/13/tcp_wave_1/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/09/10/tcp_handshake_3/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/09/09/tcp_handshake_2/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/page2/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/page5/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/09/08/tcp_handshake_1/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/08/25/cpp_process/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/08/20/cpp_thread/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/08/16/cpp_atomic_volatile/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/08/13/cpp_stl_alloc/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/08/10/distributed_consistent_hash/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/08/07/mysql_lock/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/07/26/redis_expire_delete_and_memory_elimination/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/07/19/distributed_paxos/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/07/11/python_pycodeobject_sourcecode/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/06/23/io_zero_copy/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/06/10/distributed_lease/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/06/01/distributed_raft/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/05/07/linux_process_kill/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/04/02/tcp_timewait_and_closewait/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/03/31/tcp_process_crash/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/03/23/distributed_transaction/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/02/23/distributed_cache/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/02/14/io_block_and_nonblock/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2022/02/01/mysql_explain/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2021/12/23/mysql_innodb/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2021/12/20/data_structure_algorithms_search_path/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2021/12/10/data_structure_algorithms_shortest_path/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2021/12/04/python_hotfix/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2021/12/04/data_structure_algorithms_hash/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2021/11/27/data_structure_algorithms_union_find/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2021/11/10/data_structure_algorithms_shuffle/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/2021/11/05/data_structure_algorithms_bitmap/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/index.html</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/page3/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://rxsi.github.io/page4/</loc>
+  <lastmod>2022-10-31T02:30:28+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+
+
+</urlset>
