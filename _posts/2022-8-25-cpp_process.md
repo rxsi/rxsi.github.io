@@ -146,7 +146,7 @@ fcntl (desc, F_SETFD, FD_CLOEXEC);
 ```
 对文件锁的继承问题见：[多进程/线程读写文件问题](https://rxsi.github.io/2022/10/19/io_read_write_file/)
 ### 进程关系
-进程的亲缘关系开始于一个登陆shell（称为一个会话）以及由该shell派生出的所有进程
+进程的亲缘关系开始于一个登陆 shell（称为一个会话）以及由该 shell 派生出的所有进程
 #### 父子进程
 主进程通过`fork`函数创建的进程称为子进程，在子进程的`task_struct`中的`struct task_struct __rcu* parent`字段指向父进程的
 #### 兄弟进程
@@ -154,58 +154,65 @@ fcntl (desc, F_SETFD, FD_CLOEXEC);
 #### pid为1的进程
 在linux系统启动时会有一个`pid = 1`的根进程，是所有进程的跟进程。当一个子进程的父进程退出时，子进程的`ppid`会指向该根进程
 #### 孤儿进程
-当父进程在子进程退出前退出了，那么子进程会变为孤儿进程，子进程的`ppid = 1`，指向`init`进程
-孤儿进程的释放由`init`进程管理，`init`进程会对其下每个进程退出后都调用`wait`函数，因此孤儿进程不会有系统危害。
+当父进程在子进程退出前退出了，那么子进程会变为孤儿进程，子进程的`ppid = 1`，指向`init`进程。孤儿进程的释放由`init`进程管理，`init`进程会对其下每个进程退出后都调用`wait`函数，因此**孤儿进程不会有系统危害。**
 #### 僵尸进程
-当父进程没有等待`wait/waitpid`等待，而子进程结束退出时，子进程称为僵尸进程。
-每个进程退出时，内核会释放相应的资源，但是仍会保留一定的信息，包括进程号、退出状态等，直到父进程调用`wait/waitpid`才会释放掉。当子进程成为了僵尸进程，那么该残留数据将不会得到释放，而系统能使用的进程号有限，因此僵尸进程会造成系统危害。
+当父进程没有等待`wait/waitpid`等待，而子进程结束退出时，子进程称为僵尸进程。每个进程退出时，内核会释放相应的资源，但是仍会保留一定的信息，包括进程号、退出状态等，直到父进程调用`wait/waitpid`才会释放掉。当子进程成为了僵尸进程，那么该残留数据将不会得到释放，而系统能使用的进程号有限，因此**僵尸进程会造成系统危害。**
 ### 写时复制
 在未有写时复制之前的 fork 函数，在复制进程空间时，总是把除了`正文段`以外的内存空间都复制一份，这实际上效率不高。正文段因为存储的是二进制可执行代码，因此对于父子进程来说是一致的，不需要额外在物理空间进行复制。
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1649915750884-99999c37-9107-4f6f-beed-b9bb1bb6b4b2.png#clientId=u865c2854-0e5a-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=u939fc25f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=377&originWidth=519&originalType=url&ratio=1&rotation=0&showTitle=false&size=56288&status=done&style=none&taskId=u4cd0d6d6-76c1-489b-acf1-90e4a87e2de&title=)
-`写时复制`只为子进程创建虚拟空间，而虚拟空间指向的物理空间则是和父进程一致。只有当父子进程中有更改相应内存段的行为才会分配新的物理空间。
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1649916265684-75c49d36-e9ef-48b0-b737-d1d17e2257cf.png#clientId=u865c2854-0e5a-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=u5a88420c&margin=%5Bobject%20Object%5D&name=image.png&originHeight=384&originWidth=515&originalType=url&ratio=1&rotation=0&showTitle=false&size=54801&status=done&style=none&taskId=u4846e1f1-4edd-421b-88ba-3411872fdb7&title=)
-`vfork`函数不为子进程创建虚拟空间，直接共享父进程的虚拟空间
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1649916316864-59b55984-e8cf-4ff3-8f56-abe50c1b1ce7.png#clientId=u865c2854-0e5a-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=u7df3e460&margin=%5Bobject%20Object%5D&name=image.png&originHeight=375&originWidth=508&originalType=url&ratio=1&rotation=0&showTitle=false&size=56019&status=done&style=none&taskId=u4ea05693-7bcd-42c8-a849-26c6439d5ef&title=)
-`vfork`创建新进程的目的在于用`exec`函数执行另外的程序，在子进程调用`exec`或`exit`之前子进程是和父进程共享同一个虚拟地址空间的，而此时**父进程是会被挂起（会被换到外存）**。当子进程执行`exec`时，系统会把当前子进程的代码段替换为新的，然后会生成新的代码段、数据段、堆栈段等，但是 pid、ppid 不会改变，之后父进程就可以继续运行了。
-`clone`函数可以指定创建进程的参数，可以自由选择继承父进程的哪些资源，甚至可以使创建出来的进程和原进程构成兄弟关系，而不是父子关系。
-通过指定共享当前进程的内存空间和文件等，实际就是生成了一个线程（注意：linux 并没有线程/进程的概念，只有任务（task_struct））
+
+![without_copy_on_write.png](/images/cpp_process/without_copy_on_write.png)
+
+`写时复制`则只为子进程创建虚拟空间，而虚拟空间指向的物理空间则是和父进程一致。只有当父子进程中有更改相应内存段的行为才会分配新的物理空间。
+
+![copy_on_write.png](/images/cpp_process/copy_on_write.png)
+
+`vfork`函数则不为子进程创建虚拟空间，直接共享父进程的虚拟空间
+
+![vfork.png](/images/cpp_process/vfork.png)
+
+`vfork`创建新进程的目的在于先以最小成本创建一个子进程然后再用`exec`函数执行另外的程序。在子进程调用`exec`或`exit`之前子进程是和父进程共享同一个虚拟地址空间，而此时**父进程是会被挂起（会被换到外存）**。当子进程执行`exec`时，系统会把当前子进程的代码段替换为新的，然后会生成新的代码段、数据段、堆栈段等，但是 pid、ppid 不会改变，之后父进程就可以继续运行了。
+
+`clone`函数可以指定创建进程的参数，可以自由选择继承父进程的哪些资源，甚至可以使创建出来的进程和原进程构成兄弟关系，而不是父子关系。通过指定共享当前进程的内存空间和文件等，实际就是生成了一个线程（注意：linux 并没有线程/进程的概念，只有任务（task_struct））
 ### getpid函数
-返回的是当前进程的pid
+返回的是当前进程的 pid
 ```cpp
 pid_t getpid();
 ```
 ### getppid函数
-返回的是当前进程的父进程的pid
+返回的是当前进程的父进程的 pid
 ```cpp
 pid_t getppid();
 ```
 ## 进程通信（IPC）
 根据起源可以分为以下几类：
 
-1. 传统的 Unix 进程通信方式
-- 管道（pipe）
-- 有名管道（fifo）
-- 信号（signal）
+1. 传统 Unix 进程通信方式
+    - 管道（pipe）
+    - 有名管道（fifo）
+    - 信号（signal）
 2. SystemV IPC对象
-- 共享内存（share memory）
-- 消息队列（message queue）
-- 信号量（semaphore）
+    - 共享内存（share memory）
+    - 消息队列（message queue）
+    - 信号量（semaphore）
 3. BSD
-- 套接字（socket）
+    - 套接字（socket）
 4. Posix IPC 对象
-- 共享内存（share memory）
-- 消息队列（message queue）
-- 信号量（semaphore）
+    - 共享内存（share memory）
+    - 消息队列（message queue）
+    - 信号量（semaphore）
+
 ### 管道（Pipe）与有名管道（FIFO)（随进程）
-管道和有名管道在内核区的底层实现是一致的，只不过相较于 Pipe，FIFO 会在文件系统申请一个特殊的`**管道文件**`**。**
+管道和有名管道在内核区的底层实现是一致的，只不过相较于 Pipe，FIFO 会在文件系统申请一个特殊的`管道文件`。
+
 管道和有名管道的生命周期都是**随进程**，虽然管道和有名管道的数据是由内核维护，但是当最后一个打开管道/有名管道的进程关闭后，内核会把所有数据丢弃并删除该管道/有名管道（如果管道有数据未读出，则数据丢失）
 #### 优缺点
 
 1. Pipe 只能应用在有亲缘关系的进程，而 FIFO 可以应用于任意进程之间的通信
-2. 虽然 FIFO 在文件系统有对应的管道文件，但是在数据 IO 方面只与底层内核相关，不与磁盘相关
+2. 虽然 FIFO 在文件系统有对应的管道文件，但是在数据 IO 方面只与底层内核相关，不与磁盘相关，管道文件仅作标识用
 3. 内核的缓冲区有大小限制，默认为`/proc/sys/fs/pipe-max-size`（1MB）
 4. 当写入数据小于`PIPE_BUF（4096B)`时，保证本次写入的原子性，**这意味着如果是多进程同时写入多于PIPE_BUF的属性，需要加锁**
 5. 内核缓冲区传输的是**字节流**
+
 #### 函数原型
 ```cpp
 // 管道
@@ -219,10 +226,12 @@ int mknode(const char* pathname, mode_t mode | S_IFIFO, (dev_t)0);
 // pathname是一个普通的Unix路径名,也是该FIFO的名字
 // mode参数指定了文件权限和将被创建的文件类型(在此情况下是S_IFIFO),dev是创建设备特殊文件时使用的一个值,对于先进先出文件该值为0
 ```
-当创建一个 FIFO 后，他必须以只读方式打开或者只写方式打开，FIFO 是半双工
-一般的IO函数，如`read`、 `write`、`close`、 `unlink`都可以应用于FIFO
-**管道在所有进程最终关闭之后自动消失，或者主动调用 close 函数。而文件系统中的 FIFO 文件则需要通过调用 unlink 函数进行删除，否则下次调用 mkfifo 会报错。管道文件是 p 类型**
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1650013155892-af969880-90e1-4b60-9ec8-b63e47771581.png#clientId=u171d2629-6081-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=234&id=AKwIq&margin=%5Bobject%20Object%5D&name=image.png&originHeight=234&originWidth=752&originalType=binary&ratio=1&rotation=0&showTitle=false&size=50365&status=done&style=none&taskId=u5106fe83-8f32-4dfd-b326-d820e67c788&title=p%E7%B1%BB%E5%9E%8B%E6%97%B6%E7%AE%A1%E9%81%93%E6%96%87%E4%BB%B6%E7%B1%BB%E5%9E%8B&width=752)
+当创建一个 FIFO 后，他必须以只读方式打开或者只写方式打开，FIFO 是半双工形式，一般的IO函数，如`read`、 `write`、`close`、 `unlink`都可以应用于FIFO。
+管道在所有进程最终关闭之后自动消失，或者主动调用 close 函数。而文件系统中的 FIFO 文件则需要通过调用 unlink 函数进行删除，否则下次调用 mkfifo 会报错。管道文件是 p 类型文件：
+```shell
+rxsi@VM-20-9-debian:/tmp$ ls -al my_fifo
+prwxr-x---  1 rxsi rxsi    0 Oct 12 19:16 my_fifo
+```
 #### read/write
 内核的管道缓冲区通过**引用计数**的方式记录了当前开启占用该管道的数量，在不同的情境下有不同的结果，且默认的模式都是阻塞模式，可通过`fcntl`函数设置非阻塞模式
 ```cpp
@@ -240,10 +249,10 @@ writefd = open(FIFO1, O_WRONLY | O_NONBLOK, 0);
 2. 当管道读端引用计数为0，当写端调用`write`函数时会收到`SIGPIPE`信号，进程接收到信号后会终止
 3. 当管道写端引用计数不为0，缓冲区数据为空，`read`函数会阻塞至有管道数据
 4. 当管道读端引用计数不为0，`write`函数在阻塞和非阻塞模式下有不同的表现：
-   1. O_BLOCK 模式且写入数据 n <= PIPE_BUF：如果缓冲区剩余空间足够，则立即写入且保证原子性，否则发生阻塞
-   2. O_NONBLOCK 模式且写入数据n <= PIPE_BUF：如果缓冲区剩余空间足够，则立即写入且保证原子性，否则写入失败，`errno = EAGAIN`，上层应该使用 loop 循环判断
-   3. O_BLOCK 模式且写入数据 n > PIPE_BUF：`write`函数会阻塞直到缓冲区有足够空间写入数据，但是不保证原子性 
-   4. O_NONBLOCK 模式且写入数据 n > PIPE_BUF：如果缓冲区已满，则返回失败，`errno = EAGAIN`；如果有空余的写入空间，则写入相应大小的数据，`write`返回写入成功的数据，上层应用要监听该返回值，以判断是否全部写入完成
+   * O_BLOCK 模式且写入数据 n <= PIPE_BUF：如果缓冲区剩余空间足够，则立即写入且保证原子性，否则发生阻塞
+   * O_NONBLOCK 模式且写入数据n <= PIPE_BUF：如果缓冲区剩余空间足够，则立即写入且保证原子性，否则写入失败，`errno = EAGAIN`，上层应该使用 loop 循环判断
+   * O_BLOCK 模式且写入数据 n > PIPE_BUF：`write`函数会阻塞直到缓冲区有足够空间写入数据，但是不保证原子性 
+   * O_NONBLOCK 模式且写入数据 n > PIPE_BUF：如果缓冲区已满，则返回失败，`errno = EAGAIN`；如果有空余的写入空间，则写入相应大小的数据，`write`返回写入成功的数据，上层应用要监听该返回值，以判断是否全部写入完成
 #### 底层实现原理
 当打开一个文件时，系统会为该文件在内核创建一个`struct file`结构，有多少个进程打开同一个文件，就会创建多少个`file`结构。`file`结构存储的是底层文件的信息，以及当前文件的偏移量，平时使用的`fd`，指向的底层结构就是`file`结构，当进程`fork`出子进程时，则子进程拷贝出的`fd`指向的是同一个`fd`结构，这也就实现了父子进程共享文件句柄。
 而在`file`结构中有一个字段是`f_inode`，这个字段指向了`VFS`虚拟文件系统的`inode`结构，这个`inode`结构和实际文件中的`inode`不是同一个。之所以进行了一层抽象，是因为底层文件系统的类型有多样，比如`ext4`、`ntfs`等，所以使用`VFS`进行统一管理，使上层能够使用统一的接口进行文件系统的操作，而虚拟的`inode`
