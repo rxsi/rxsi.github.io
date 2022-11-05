@@ -764,15 +764,14 @@ key_t ftok(const char *pathname, int proj_id);
 
 消息队列可以在没有接收进程的情况下发送消息给消息队列，避免了管道/FIFO的同步和阻塞问题(管道类型要求至少存在一个读端和写端)，生命周期**随内核**。
 #### 队列的系统参数
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1651416950736-19406f99-01bb-4394-a3ea-5ccfdff59e11.png#clientId=u990000e9-f3f3-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=271&id=uf8ea5f5d&margin=%5Bobject%20Object%5D&name=image.png&originHeight=271&originWidth=382&originalType=binary&ratio=1&rotation=0&showTitle=false&size=18818&status=done&style=none&taskId=u4b86af13-85da-4dcc-a06d-de8b6b610c8&title=&width=382)
 ```shell
-lighthouse@VM-20-9-debian:~$ cat /proc/sys/kernel/msgmax // 单个消息的最大字节数
-8192
-lighthouse@VM-20-9-debian:~$ cat /proc/sys/kernel/msgmnb // 整个消息队列的最大字节数
-16384
-lighthouse@VM-20-9-debian:~$ cat /proc/sys/kernel/msgmni
-32000 
+rxsi@VM-20-9-debian:~$ ipcs -l
+------ Messages Limits --------
+max queues system wide = 32000
+max size of message (bytes) = 8192
+default max size of queue (bytes) = 16384
 ```
+
 #### msgget函数
 用以打开一个现存的队列或者创建一个消息队列
 ```cpp
@@ -796,27 +795,6 @@ struct msqid_ds
     pid_t msg_lrpid; // 最后调用msgrcv的进程的ID
 };
 ```
-`ipc_perm`结构体
-```cpp
-struct ipc_perm
-{
-    key_t __key; // 通过msgget创建的key
-    uid_t uid; // 拥有者的id,可通过IPC_SET修改
-    gid_t gid; // 拥有者的组id,可通过IPC_SET修改
-    uid_t cuid; // 创建者的id
-    gid_t cgid; // 拥有者的组id
-    unsigned short mode; // 权限,可通过IPC_SET修改
-    // mode可选有:
-    // 0400 用户有读权限
-    // 0200 用户有写权限
-    // 0040 与用户同组的用户都有读权限
-    // 0020 与用户同组的用户都有写权限
-    // 0004 其他用户有读权限
-    // 0002 其他用户有写权限
-    // 如果设置0666,则代表所有用户都有可读可写权限,例如通过msgget(key_t key, 0666|IPC_CREATE)的方式创建并设置权限
-    unsigned short __seq;
-};
-```
 #### msgctl函数
 用以控制队列的权限和行为，如**删除队列**
 ```cpp
@@ -836,7 +814,7 @@ int msgsnd(int msqid, const void* msgp, size_t msgz, int msgflg);
 // 从消息队列中取出消息,调用者需要有读权限
 ssize_t msgrcv(int msqid, void* msgp, size_t msgsz, long msgtyp, int msgflg);
 ```
-`void* msgp` 指向一个结构体，用以存放实际的消息数据，这个结构体名可以自定义，但是必须要含有`long mtype`和`char mtext[xxx]`这两个字段，这是在`msg.h`中的规定
+`void* msgp` 指向一个结构体，用以存放实际的消息数据，这个结构体名可以自定义，但是必须要含有`long mtype`和`char mtext[xxx]`这两个字段，这是`msg.h`中的规定
 ```cpp
 struct msgbuf
 {
@@ -844,17 +822,15 @@ struct msgbuf
     char mtext[1]; // 消息体，该大小由size_t msgz指定
 };
 ```
-当插入的消息：
-
-1. 总字节数超过`msg_qbytes`字段，这个字段定义在`msqid_ds`结构体中
-2. 或者总消息数量超过`msg_qbytes`字段，这个判断是为了避免无限插入长度为0的消息，则插入失败返回-1
+当已有插入消息的总字节数超过了`msg_qbytes`字段（这个字段定义在`msqid_ds`结构体中），或者总消息数量超过了该值（这是为了避免无限插入长度为0的消息），则插入失败返回-1
 
 当读取消息时，如果`msgrcv`函数的`msgsz`参数小于所要接收的消息的`mtext`长度，则如果设置了`MSG_NOERROR`那么会截断该消息的`mtext`字段，并把新消息传入`void* msgp`所指向的结构体中，并移除原消息；否则读取失败返回-1，并且`errno = E2BIG`，原消息不会被移除。
-对于消息类型的读取，是通过`msgrcv`函数中的`msgtyp`参数控制：
 
-1. msgtype == 0：消息队列中的收个消息将被读取
+对于消息类型的读取，是通过`msgrcv`函数中的`msgtyp`参数控制：
+1. msgtype == 0：消息队列中的首个消息将被读取
 2. msgtyp > 0：消息队列中的`msgbuf`中与之相等的`mtype`的消息会被读取
-3. msgtyp < 0：消息队列中第一个小于等于该绝对值的消息会被读取(实现对一个范围的消息进行读取)
+3. msgtyp < 0：消息队列中第一个小于等于该**绝对值**的消息会被读取(实现对一个范围的消息进行读取)
+
 #### 阻塞和非阻塞
 如果消息队列空间不足，那么`msgsnd`会阻塞到空间足够。如果`msgsnd`函数的`msgflg`有设置`IPC_NOWAIT`参数，那么会立即返回失败，错误码`errno = EAGAIN`。
 当`msgsnd`为阻塞时，如果队列被移除(errno = EIDRM)或者被信号打断如(errno = EINTR)，那么会返回失败-1
