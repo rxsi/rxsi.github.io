@@ -832,8 +832,8 @@ struct msgbuf
 3. msgtyp < 0：消息队列中第一个小于等于该**绝对值**的消息会被读取(实现对一个范围的消息进行读取)
 
 #### 阻塞和非阻塞
-如果消息队列空间不足，那么`msgsnd`会阻塞到空间足够。如果`msgsnd`函数的`msgflg`有设置`IPC_NOWAIT`参数，那么会立即返回失败，错误码`errno = EAGAIN`。
-当`msgsnd`为阻塞时，如果队列被移除(errno = EIDRM)或者被信号打断如(errno = EINTR)，那么会返回失败-1
+如果消息队列空间不足，那么`msgsnd`会阻塞到空间足够。如果`msgsnd`函数的`msgflg`有设置`IPC_NOWAIT`参数，那么会立即返回失败，错误码`errno = EAGAIN`。当`msgsnd`为阻塞时，如果队列被移除(errno = EIDRM)或者被信号打断如(errno = EINTR)，那么会返回失败-1。
+
 当调用`msgrcv`函数时，如果消息队列中已经没有目标类型消息，如果`msgflg`没有设置`IPC_NOWAIT`参数时,读取操作将会进入阻塞，直到有目标消息类型的消息被放入消息队列中，或者该消息队列被移除。当读取成功时，msgrcv函数返回对应的字节数，否则返回-1。如果处于非阻塞状态，则读取失败后的`errno = EAGAIN`
 #### 示例代码
 ```cpp
@@ -914,28 +914,33 @@ int main()
 ### mmap共享内存（随内核、基于Page Cache，用来做高性能文件读写）
 mmap 通过将`文件（open+mmap）`或者`共享内存体（shm_open+mmp，Posix共享内存）`映射到进程地址空间，主要有两方面的应用：
 
-1. 通过多个进程共享文件的映射进程地址空间，避免了每个进程都对文件进行拷贝，避免了使用 **read、write **等函数，效率更高
+1. 通过多个进程共享文件的映射进程地址空间，避免了每个进程都对文件进行拷贝，避免使用 **read、write** 等函数（会造成用户态和内核态切换，数据拷贝等），效率更高
 2. 因为该进程地址是所有进程共享的，因此可以实现进程间的数据通信
 3. 该内核映射空间就是`PageCache`空间
 4. mmap 区的增长方向是从大到小，和栈的增长方向一致
 
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1652770504655-d4841ba6-3f19-48f3-9c34-ef7b5ca872b0.png#clientId=uab2173bb-513b-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=uf84571cd&margin=%5Bobject%20Object%5D&name=image.png&originHeight=398&originWidth=726&originalType=url&ratio=1&rotation=0&showTitle=false&size=58736&status=done&style=none&taskId=uaad64a10-91c7-4e5f-9b5a-ef09009a3ac&title=)
-但是注意，并不是每个文件类型都可以使用 mmap，比如 **访问终端fd、socket fd **就不可以使用 mmap 进行映射。
-linux 内核使用`vm_area_struct`结构表示一个独立的虚拟内存区域，由于每个不同质的虚拟内存区域功能和内部机制不同，因此一个进程使用多个 vm_area_struct 结构来表示不同类型的虚拟内存区域。各个 vm_area_struct 结构使用链表和红黑树结构链接，方便进程快速访问
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1653029022468-80560239-cba8-44da-891d-699341ce8f50.png#clientId=ua0a14717-39b7-4&crop=0&crop=0&crop=1&crop=1&from=paste&id=u65ddada7&margin=%5Bobject%20Object%5D&name=image.png&originHeight=467&originWidth=658&originalType=url&ratio=1&rotation=0&showTitle=false&size=46139&status=done&style=none&taskId=u8a1689b4-9706-4321-8fd9-1ee4110eaf2&title=)
+![share_memory.png](/images/cpp_process/share_memory.png)
+
+但是注意，并不是每个文件类型都可以使用 mmap，比如 **访问终端fd、socket fd** 就不可以使用 mmap 进行映射。
+
+linux 内核使用`vm_area_struct`结构表示一个独立的虚拟内存区域，由于存在多种功能和内部机制不同的虚拟内存区域，因此一个进程使用多个 vm_area_struct 结构来表示不同类型的虚拟内存区域。各个 vm_area_struct 结构使用链表和红黑树结构链接，方便进程快速访问：
+
+![vma.png](/images/cpp_process/vma.png)
+
 #### mmap 内存映射原理
 
 1. 进程启动映射过程，并在虚拟地址空间中为映射创建虚拟映射区域：（创建VMA）
 
-当调用`mmap`函数时，传入的`size_t length`一般是传入的文件的大小，该值不需要强制指定为页的整数倍大小，内核会自动向上调整。内核会根据该值寻找一段空闲的满足要求的连续虚拟地址，且为该虚拟地址分配一个`vm_area_struct`结构，接着对该结构进行初始化，最后将该虚拟结构插入进程的虚拟地址区域链表或树。
+    当调用`mmap`函数时，传入的`size_t length`一般是传入的文件的大小，该值不需要强制指定为页的整数倍大小，内核会自动向上调整。内核会根据该值寻找一段空闲的满足要求的连续虚拟地址，且为该虚拟地址分配一个`vm_area_struct`结构，接着对该结构进行初始化，最后将该虚拟结构插入进程的虚拟地址区域链表或树。
 
 2. 通过 mmap 函数实现文件物理地址和进程虚拟地址的映射关系：（VMA和文件形成映射）
 
-在分配了新的虚拟地址区域之后，通过待映射的文件指针，在文件描述符表中找到对应的文件描述符，通过该文件描述符链接到内核的“已打开文件集”中该文件的文件结构体（struct file），建立文件地址和虚拟地址区域的映射关系。
+    在分配了新的虚拟地址区域之后，通过待映射的文件指针，在文件描述符表中找到对应的文件描述符，通过该文件描述符链接到内核的“已打开文件集”中该文件的文件结构体（struct file），建立文件地址和虚拟地址区域的映射关系。
 
 3. 进程发起对这片映射空间的访问，引发缺页异常，实现文件内容到物理内容的拷贝：（缺页异常）
 
-当建立起映射关系后，并没有把文件数据拷贝到主存，而是当进程发起读或写操作时，引发出**缺页异常**，使内核请求调页过程。当进程对主存进行写操作修改了内容，一定时间之后系统会自动写回脏页到磁盘空间（可通过msync()进行强制同步）
+    当建立起映射关系后，并没有把文件数据拷贝到主存，而是当进程发起读或写操作时，引发出**缺页异常**，使内核请求调页过程。当进程对主存进行写操作修改了内容，一定时间之后系统会自动写回脏页到磁盘空间（可通过msync()进行强制同步）
+    
 #### mmap函数
 ```cpp
 #include <sys/mman.h>
