@@ -432,8 +432,7 @@ int main()
 | raise | int raise(int sig) | 发送信号给自身 |
 | alarm | unsigned int alarm(unsigned int seconds) | 当定时时间到达后，向调用方发出SIGALRM信号 |
 | pause | int pause(void) | 暂停进程，知道接收到任意信号 |
-| signal | typedef void (*sighandler_t)(int);
-sighandler_t signal(int sig, sighander_t handler) | 捕捉信号，然后执行自定义的sighandler_t函数 |
+| signal | typedef void (*sighandler_t)(int);<br>sighandler_t signal(int sig, sighander_t handler) | 捕捉信号，然后执行自定义的sighandler_t函数 |
 
 #### 示例代码
 ```python
