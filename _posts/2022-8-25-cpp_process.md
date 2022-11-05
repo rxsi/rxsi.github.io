@@ -715,12 +715,42 @@ key_t ftok(const char *pathname, int proj_id);
 由于System V IPC的三种类型不是以文件系统中的路径名标识，因此使用标准的ls和rm程序无法看到和删除它们。因此提供了`ipcs`用以查看，`ipcrm`用以删除
 
 - **ipcs：显示当前系统创建的ipc对象**
+    ```shell
+    rxsi@VM-20-9-debian:~$ ipcs
 
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1651839397724-4f124965-37ff-429f-9a5e-9be523be19f4.png#clientId=u33f76a3a-e4ff-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=355&id=u23ed86a7&margin=%5Bobject%20Object%5D&name=image.png&originHeight=355&originWidth=680&originalType=binary&ratio=1&rotation=0&showTitle=false&size=45457&status=done&style=none&taskId=u67664c3b-0ff6-431f-b302-923824f8b5e&title=&width=680)
+    ------ Message Queues --------
+    key        msqid      owner      perms      used-bytes   messages    
+
+    ------ Shared Memory Segments --------
+    key        shmid      owner      perms      bytes      nattch     status      
+    0x00005feb 0          root       666        12000      1                       
+
+    ------ Semaphore Arrays --------
+    key        semid      owner      perms      nsems     
+    ```
 
 - **ipcs -l：显示ipc系统内核限制**
+    ```shell
+    rxsi@VM-20-9-debian:~$ ipcs -l
 
-![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1651839437805-f72d996d-ea8a-4dbf-b7a1-dad76e6909c6.png#clientId=u33f76a3a-e4ff-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=350&id=ub7bb025e&margin=%5Bobject%20Object%5D&name=image.png&originHeight=350&originWidth=487&originalType=binary&ratio=1&rotation=0&showTitle=false&size=40977&status=done&style=none&taskId=ud8d05ee8-5394-4300-9966-733acbb9012&title=&width=487)
+    ------ Messages Limits --------
+    max queues system wide = 32000
+    max size of message (bytes) = 8192
+    default max size of queue (bytes) = 16384
+
+    ------ Shared Memory Limits --------
+    max number of segments = 4096
+    max seg size (kbytes) = 18014398509465599
+    max total shared memory (kbytes) = 18014398509481980
+    min seg size (bytes) = 1
+
+    ------ Semaphore Limits --------
+    max number of arrays = 32000
+    max semaphores per array = 32000
+    max semaphores system wide = 1024000000
+    max ops per semop call = 500
+    semaphore max value = 32767
+    ```
 
 - **ipcrm -M shmkey：用以移除用shmkey创建的共享内存段**
 - **ipcrm -m shmid：用以移除用shmid标识的共享内存段**
@@ -728,11 +758,11 @@ key_t ftok(const char *pathname, int proj_id);
 - **ipcrm -s semid：用以移除用semid标识的信号量**
 - **ipcrm -Q msgkey：用以移除用msgkey标识的消息队列**
 - **ipcrm -q msgid：用以移除用msgid标识的消息队列**
+
 ### 消息队列（随内核、可指定接收优先级）
-消息队列提供了一种从一个进程向另一个进程发送一个数据块的方法，消息队列是消息的链接表，存放在内核中并由消息队列标识符标识。
-每个消息数据块都含有一个类型，接收进程可以独立的接收含有不同类型的数据结构，且具有最大长度限制。
-消息队列可以在没有接收进程的情况下发送消息给消息队列，避免了管道/FIFO的同步和阻塞问题(管道类型要求至少存在一个读端和写端)
-消息队列的生命周期**随内核**
+消息队列提供了一种从一个进程向另一个进程发送一个数据块的方法，消息队列是消息的链接表，存放在内核中并由消息队列标识符标识。每个消息数据块都含有一个类型，接收进程可以独立的接收含有不同类型的数据结构，且具有最大长度限制。
+
+消息队列可以在没有接收进程的情况下发送消息给消息队列，避免了管道/FIFO的同步和阻塞问题(管道类型要求至少存在一个读端和写端)，生命周期**随内核**。
 #### 队列的系统参数
 ![image.png](https://cdn.nlark.com/yuque/0/2022/png/27017064/1651416950736-19406f99-01bb-4394-a3ea-5ccfdff59e11.png#clientId=u990000e9-f3f3-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=271&id=uf8ea5f5d&margin=%5Bobject%20Object%5D&name=image.png&originHeight=271&originWidth=382&originalType=binary&ratio=1&rotation=0&showTitle=false&size=18818&status=done&style=none&taskId=u4b86af13-85da-4dcc-a06d-de8b6b610c8&title=&width=382)
 ```shell
