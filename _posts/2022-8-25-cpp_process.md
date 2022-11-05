@@ -940,45 +940,47 @@ linux 内核使用`vm_area_struct`结构表示一个独立的虚拟内存区域�
 3. 进程发起对这片映射空间的访问，引发缺页异常，实现文件内容到物理内容的拷贝：（缺页异常）
 
     当建立起映射关系后，并没有把文件数据拷贝到主存，而是当进程发起读或写操作时，引发出**缺页异常**，使内核请求调页过程。当进程对主存进行写操作修改了内容，一定时间之后系统会自动写回脏页到磁盘空间（可通过msync()进行强制同步）
-    
+
 #### mmap函数
 ```cpp
 #include <sys/mman.h>
 
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
-// void* addr：用户进程中所要映射的用户空间的起始地址，通常为NULL（由内核指定）
-// size_t length：要映射的内存区域的大小
-
-// int prot：期望的内存保护标志，不能与文件的打开模式冲突
-- PORT_EXEC：页内容可以被执行
-- PORT_READ：页内容可以被读取
-- PORT_WRITE：页可以被写入
-- PORT_NONE：页不可访问
-
-// int flags：指定映射对象的类型，映射选项和映射页是否可以共享
-- MAP_FIXED：使用指定的映射起始地址，如果由start和len参数指定的内存区重叠于现存的映射空间，重叠部分将会被丢弃。如果指定的起始地址不可用，操作将会失败。并且起始地址必须落在页的边界上。
-- MAP_SHARED：与其它所有映射这个对象的进程共享映射空间。对共享区的写入，相当于输出到文件。直到msync()或者munmap()被调用，文件实际上不会被更新。当设置该属性时，fork出的子进程将会继承该共享内存区域
-- MAP_PRIVATE：建立一个写入时拷贝的私有映射。内存区域的写入不会影响到原文件。这个标志和以上标志是互斥的，只能使用其中一个。
-
-// int fd：有效的文件描述符
-// off_t offset：被映射对象内容的起点
+/*
+void* addr：用户进程中所要映射的用户空间的起始地址，通常为NULL（由内核指定）
+size_t length：要映射的内存区域的大小
+int prot：期望的内存保护标志，不能与文件的打开模式冲突
+    - PORT_EXEC：页内容可以被执行
+    - PORT_READ：页内容可以被读取
+    - PORT_WRITE：页可以被写入
+    - PORT_NONE：页不可访问
+int flags：指定映射对象的类型，映射选项和映射页是否可以共享
+    - MAP_FIXED：使用指定的映射起始地址，如果由start和len参数指定的内存区重叠于现存的映射空间，重叠部分将会被丢弃。如果指定的起始地址不可用，操作将会失败。并且起始地址必须落在页的边界上。
+    - MAP_SHARED：与其它所有映射这个对象的进程共享映射空间。对共享区的写入，相当于输出到文件。直到msync()或者munmap()被调用，文件实际上不会被更新。当设置该属性时，fork出的子进程将会继承该共享内存区域
+    - MAP_PRIVATE：建立一个写入时拷贝的私有映射。内存区域的写入不会影响到原文件。这个标志和以上标志是互斥的，只能使用其中一个。
+int fd：有效的文件描述符
+off_t offset：被映射对象内容的起点
 
 return: 成功返回映射区的起始地址，出错则返回MAP_FAILED
+*/
 ```
 用以创建`VMA`并将某个文件映射到进程地址空间中，一般有三种类型方式：
 
-1. 使用普通文件以内存映射IO（open + mmap）
+1. 使用普通文件以内存映射IO（open + mmap），一般是用来实现零拷贝
 2. 使用特殊文件提供匿名内存映射（使用 mmap 时指定flag=MAP_ANONYMOUS，fd=-1），一般用于亲缘关系的进程
 3. 使用 Posix 共享内存区（shm_open + mmap）
+
 #### munmap函数
 ```cpp
 #include <sys/mman.h>
 
 int munmap(void* addr, size_t len);
-// void* addr：映射区的地址
-// size_t len：映射区的大小
+/*
+void* addr：映射区的地址
+size_t len：映射区的大小
 
 return：成功返回0，出错返回-1
+*/
 ```
 用以从某个进程的地址空间删除一个映射关系，此时如果映射区是被`MAP_PRIVATE`标志映射的，那么调用进程对它所作的变动都会被丢弃掉。
 #### msync函数
@@ -986,14 +988,16 @@ return：成功返回0，出错返回-1
 #include <sys/mman.h>
 
 int msync(void* addr, size_t len, int flags);
-// void* addr：映射区的地址
-// size_t len：映射区的大小
-// int flags：标志位
-- MS_ASYNC：执行异步写
-- MS_SYNC：执行同步写
-- MS_INVALIDATE：使高速缓存的数据失效
+/*
+void* addr：映射区的地址
+size_t len：映射区的大小
+int flags：标志位
+    - MS_ASYNC：执行异步写
+    - MS_SYNC：执行同步写
+    - MS_INVALIDATE：使高速缓存的数据失效
 
 return：成功返回0，出错返回-1
+*/
 ```
 当映射区被标记为`MAP_SHARED`，那么我们修改了处于内存映射区的文件内容，那么内核将会在稍后某个时刻写入到磁盘文件。我们可以使用`msync`函数立即执行写回操作。
 #### 示例代码
@@ -1081,49 +1085,55 @@ int main()
 #include <sys/mman.h>
 
 int shm_open(const char *name, int oflag, mode_t mode);
-// const char *name：具体存在的系统路径，以/开头，且只能包含一个/
-// int oflag：至少要含有只读标志（O_RDONLY），亦或者同时含有读写（O_RDWR），同时可以包含O_CREATE、O_EXCL或O_TRUNC。如果指定了O_RDWR | O_TRUNC，则如果共享内存区对象已经存在，会截断至0长度
-// mode_t mode：权限位，在指定了O_CREAT标志下生效，如果非创建则填入0即可
+/*
+const char *name：具体存在的系统路径，以/开头，且只能包含一个/
+int oflag：至少要含有只读标志（O_RDONLY），亦或者同时含有读写（O_RDWR），同时可以包含O_CREATE、O_EXCL或O_TRUNC。如果指定了O_RDWR | O_TRUNC，则如果共享内存区对象已经存在，会截断至0长度
+mode_t mode：权限位，在指定了O_CREAT标志下生效，如果非创建则填入0即可
 
-返回值：
-成功返回非负描述符，出错返回-1
+return: 成功返回非负描述符，出错返回-1
+*/
 ```
-返回的描述符用以在`mmap`函数的 **fd **参数处使用
+返回的描述符用以在`mmap`函数的 **fd** 参数处使用
 #### shm_unlink函数
 ```cpp
 int shm_unlink(const char *name);
-// const char *name：路径名
+/*
+const char *name：路径名
 
-返回值：
-成功返回0，失败返回-1
+return: 成功返回0，失败返回-1
+*/
 ```
 用以删除一个共享内存区对象的名字，同样的也会在底层对象的引用计数为0后才真正删除
 #### ftruncate函数
 ```cpp
 #include <unistd.h>
 int ftruncate(int fd, off_t length);
-// int fd：描述符
-// off_t length：目标长度
+/*
+int fd：描述符
+off_t length：目标长度
 
-返回值：
-成功返回0，出错返回-1
+return：成功返回0，出错返回-1
+*/
 ```
 用以改变共享内存区的大小，针对`普通文件`和`共享内存区对象`有不同的处理方式：
-
 - 普通文件：
    - 文件的大小 > length参数：**额外的数据会被丢弃**
    - 文件的大小 < length参数：扩展文件。但不是所有系统都保证可以实现，另一种实现的方式是使用`lseek`偏移到`length-1`处，再使用`write`函数写入扩展长度的数据
 - 共享内存对象：
    - 会直接修改对应内存对象的大小
+   
 #### fstat函数
 ```cpp
 #include <sys/types.h>
 #include <sys/stat.h>
 
 int fstat(int fd, struct stat *buf); 
-// int fd：描述符
-// struct stat *buf：该结构体用以存储信息，比如文件的大小等
+/*
+int fd：描述符
+struct stat *buf：该结构体用以存储信息，比如文件的大小等
+*/
 ```
+用以获取当前文件描述符 fd 的信息
 #### 示例代码
 ```cpp
 #include <sys/mman.h>
@@ -1191,12 +1201,13 @@ struct shmid_ds
 ```cpp
 #include <sys/shm.h>
 int shmget(key_t key, size_t size, int oflag);
-// key_t key：通过ftok函数返回的标识符，也可以是IPC_PRIVATE（由内核自行分配唯一的标识符）
-// size_t size：以字节位单位，如果是创建新的共享内存区，则不为0，否则应该为0
-// int oflag：IPC_CREAT 或 IPC_CREAT | IPC_EXCL
+/*
+key_t key：通过ftok函数返回的标识符，也可以是IPC_PRIVATE（由内核自行分配唯一的标识符）
+size_t size：以字节位单位，如果是创建新的共享内存区，则不为0，否则应该为0
+int oflag：IPC_CREAT 或 IPC_CREAT | IPC_EXCL
 
-返回：
-成功返回共享内存区对象的id（shmid），出错返回-1
+return：成功返回共享内存区对象的id（shmid），出错返回-1
+*/
 ```
 用以创建或者打开一个已存在的共享内存区，注意调用该函数的进程并没有链接到该进程的地址空间
 #### shmat函数
