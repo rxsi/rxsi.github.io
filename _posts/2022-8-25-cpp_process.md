@@ -253,11 +253,13 @@ writefd = open(FIFO1, O_WRONLY | O_NONBLOK, 0);
    * O_NONBLOCK 模式且写入数据n <= PIPE_BUF：如果缓冲区剩余空间足够，则立即写入且保证原子性，否则写入失败，`errno = EAGAIN`，上层应该使用 loop 循环判断
    * O_BLOCK 模式且写入数据 n > PIPE_BUF：`write`函数会阻塞直到缓冲区有足够空间写入数据，但是不保证原子性 
    * O_NONBLOCK 模式且写入数据 n > PIPE_BUF：如果缓冲区已满，则返回失败，`errno = EAGAIN`；如果有空余的写入空间，则写入相应大小的数据，`write`返回写入成功的数据，上层应用要监听该返回值，以判断是否全部写入完成
+
 #### 底层实现原理
 当打开一个文件时，系统会为该文件在内核创建一个`struct file`结构，有多少个进程打开同一个文件，就会创建多少个`file`结构。`file`结构存储的是底层文件的信息，以及当前文件的偏移量，平时使用的`fd`，指向的底层结构就是`file`结构，当进程`fork`出子进程时，则子进程拷贝出的`fd`指向的是同一个`fd`结构，这也就实现了父子进程共享文件句柄。
-而在`file`结构中有一个字段是`f_inode`，这个字段指向了`VFS`虚拟文件系统的`inode`结构，这个`inode`结构和实际文件中的`inode`不是同一个。之所以进行了一层抽象，是因为底层文件系统的类型有多样，比如`ext4`、`ntfs`等，所以使用`VFS`进行统一管理，使上层能够使用统一的接口进行文件系统的操作，而虚拟的`inode`
-管道的实现就借助了`file`结构和`VFS`虚拟文件系统的`inode`结构。当进程开启管道，会同时创建两个`file`结构，分别对应写端和读端，这也就是为何我们使用`int fd[2]; pipie(fd);`了。这两个`file`结构指向了同一个`inode`，而`inode`又指向了物理数据页在内存中的缓存，因此管道实际的操作发生在内存。
-![](https://cdn.nlark.com/yuque/0/2022/gif/27017064/1650011372759-2d3e3132-c733-451a-b960-cb11d342d239.gif#clientId=u171d2629-6081-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=388&id=u75ba512f&margin=%5Bobject%20Object%5D&originHeight=374&originWidth=470&originalType=url&ratio=1&rotation=0&showTitle=false&status=done&style=none&taskId=uc27334ba-8b39-498e-a565-75fb5d4c372&title=&width=487)
+
+而在`file`结构中有一个字段是`f_inode`，这个字段指向了`VFS`虚拟文件系统的`inode`结构，这个`inode`结构和实际文件中的`inode`不是同一个。之所以进行了一层抽象，是因为底层文件系统的类型有多样，比如`ext4`、`ntfs`等，所以使用`VFS`进行统一管理，使上层能够使用统一的接口进行文件系统的操作，而虚拟的`inode`管道的实现就借助了`file`结构和`VFS`虚拟文件系统的`inode`结构。
+
+当进程开启管道，会同时创建两个`file`结构，分别对应写端和读端，这也就是为何我们使用`int fd[2]; pipie(fd);`了。这两个`file`结构指向了同一个`inode`，而`inode`又指向了物理数据页在内存中的缓存，因此管道实际的操作发生在内存。
 #### 示例代码
 匿名管道：
 ```cpp
