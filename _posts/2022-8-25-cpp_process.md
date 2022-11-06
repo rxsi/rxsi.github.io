@@ -968,7 +968,7 @@ return: 成功返回映射区的起始地址，出错则返回MAP_FAILED
 
 1. 使用普通文件以内存映射IO（open + mmap），一般是用来实现零拷贝
 2. 使用特殊文件提供匿名内存映射（使用 mmap 时指定flag=MAP_ANONYMOUS，fd=-1），一般用于亲缘关系的进程
-3. 使用 Posix 共享内存区（shm_open + mmap）
+3. 使用 Posix 共享内存区（shm_open + mmap），一般用来作为进程通信
 
 #### munmap函数
 ```cpp
@@ -1078,7 +1078,7 @@ int main()
     return 0;
 }
 ```
-### Posix共享内存（随内核、基于tmpfs，文件路径/dev/shm)
+### Posix共享内存（随内核、基于tmpfs虚拟文件系统实际挂载路径为/dev/shm)
 底层本质还是`mmap`共享内存机制，只不过是基于`共享内存区对象`实现的方式
 #### shm_open函数
 ```cpp
@@ -1147,7 +1147,8 @@ struct stat *buf：该结构体用以存储信息，比如文件的大小等
 // 编译：g++ IPC_test.cpp -o bin/IPC_test -lrt
 
 #define PATH "/mmap_text" // 使用open+mmap是要求该文件一定存在，不计较包含了多少个/。
-// 使用shm_open + mmap则一定只能包含一个/，因此"/tmp/mmap_text"是错误的，
+// 使用shm_open + mmap则一定只能包含一个/，因此"/tmp/mmap_text"是错误的，文件可不存在，这里只是作为标识，实际挂载在tmpfs虚拟文件系统，路径在/dev/shm
+// 比如这里我们定义的是mmap_text，那么当运行之后就会生成/dev/shm/mmap_text文件
 int SIZE = 100;
 
 int main()
@@ -1179,7 +1180,7 @@ int main()
     return 0;
 }
 ```
-### System V共享内存（随内核、基于tmpfs）
+### System V共享内存（随内核、基于tmpfs虚拟文件系统）
 System V 共享内存的实现类似于 Posix 共享内存，对于每个共享内存区，内核会维护如下的数据结构：
 ```cpp
 #include <sys/shm.h>
@@ -1214,38 +1215,42 @@ return：成功返回共享内存区对象的id（shmid），出错返回-1
 ```cpp
 #include <sys/shm.h>
 void *shmat(int shmid, const void *shmaddr, int flag);
-// int shmid：由shmget返回的标识符
-// const void *shmaddr：指定的共享内存区地址，一般使用空指针即可，有系统自动选择，如果是非空指针，则由 flag 中的SHM_RND影响
-// int flag：限定权限
+/*
+int shmid：由shmget返回的标识符
+const void *shmaddr：指定的共享内存区地址，一般使用空指针即可，有系统自动选择，如果是非空指针，则由 flag 中的SHM_RND影响
+int flag：限定权限
 
-返回：
-成功返回映射区的起始地址，出错返回-1
+return：成功返回映射区的起始地址，出错返回-1
+*/
 ```
 用以将申请的共享内存区**链接**到调用进程的地址空间（堆空间和栈空间之间的中间区域，就是mmap共享内存区域）
 #### shmdt函数
 ```cpp
 #include <sys/shm.h>
 int shmdt(const void *shmaddr);
-// const void *shmaddr：由shmat函数返回的共享内存区指针地址
+/*
+const void *shmaddr：由shmat函数返回的共享内存区指针地址
 
-返回：
-成功返回0，出错返回-1
+return：成功返回0，出错返回-1
+*/
 ```
 当进程主动调用该函数时，将会**断接**这个内存区，**当一个进程终止时，它当前所有链接的共享内存区都会自动断接**
+
 注意，本函数不会删除共享内存区
 #### shmctl函数
 ```cpp
 #include <sys/shm.h>
 int shmctl(int shmid, int cmd, struct shmid_ds *buff);
-// int shmid：标识符
-// int cmd：命令类型，
-    IPC_RMID：删除共享内存区
-    IPC_SET：设置共享内存区对应的shmid_ds结构的三个成员：shm_perm.uid, shm_perm.gid, shm_perm.mode，这些值由buff参数提供
-    IPC_STAT：将共享内存区当前的shmid_ds结构体属性设置到buff参数中
-// struct shmid_ds *buff：shmid_ds结构体
-    
-返回：
-成功返回0，出错返回-1
+/*
+int shmid：标识符
+int cmd：命令类型：
+    - IPC_RMID：删除共享内存区
+    - IPC_SET：设置共享内存区对应的shmid_ds结构的三个成员：shm_perm.uid, shm_perm.gid, shm_perm.mode，这些值由buff参数提供
+    - IPC_STAT：将共享内存区当前的shmid_ds结构体属性设置到buff参数中
+struct shmid_ds *buff：shmid_ds结构体
+
+return：成功返回0，出错返回-1
+*/
 ```
 #### 示例代码
 ```cpp
