@@ -3,7 +3,7 @@ layout: post
 title: 并查集
 date: 2021-11-27 14:11:32 +0800
 categories: 数据结构与算法
-tags: 并查集 数据结构 算法
+tags: 并查集
 author: Rxsi
 ---
 

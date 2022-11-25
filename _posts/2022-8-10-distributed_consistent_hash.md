@@ -3,7 +3,7 @@ layout: post
 title: 一致性hash
 date: 2022-8-10 19:23:02 +0800
 categories: 分布式
-tags: 分布式 consistent_hash 
+tags: consistent_hash 
 author: Rxsi
 ---
 

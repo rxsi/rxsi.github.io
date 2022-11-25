@@ -3,7 +3,7 @@ layout: post
 title: raft
 date: 2022-06-01 16:58:25 +0800
 categories: 分布式
-tags: 分布式 raft 
+tags: raft 
 author: Rxsi
 ---
 

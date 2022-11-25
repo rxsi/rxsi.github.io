@@ -3,7 +3,7 @@ layout: post
 title: paxos
 date: 2022-7-19 20:09:31 +0800
 categories: 分布式
-tags: 分布式 paxos 
+tags: paxos 
 author: Rxsi
 ---
 

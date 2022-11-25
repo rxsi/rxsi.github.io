@@ -3,7 +3,7 @@ layout: post
 title: 洗牌算法
 date: 2021-11-10 10:22:43 +0800
 categories: 数据结构与算法
-tags: Fisher-Yates 蓄水池采样 数据结构 算法
+tags: Fisher-Yates 蓄水池采样
 author: Rxsi
 ---
 

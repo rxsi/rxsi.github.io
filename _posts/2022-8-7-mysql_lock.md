@@ -3,7 +3,7 @@ layout: post
 title: Mysql数据库锁
 date: 2022-8-7 14:52:02 +0800
 categories: MySQL
-tags: mysql lock 
+tags: database_lock
 author: Rxsi
 ---
 

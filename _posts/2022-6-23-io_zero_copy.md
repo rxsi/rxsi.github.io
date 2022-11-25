@@ -3,7 +3,7 @@ layout: post
 title: 零拷贝技术
 date: 2022-6-23 21:02:03 +0800
 categories: IO技术
-tags: io 零拷贝 
+tags: 零拷贝 
 author: Rxsi
 ---
 

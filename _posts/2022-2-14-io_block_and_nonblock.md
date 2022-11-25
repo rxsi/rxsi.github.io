@@ -3,7 +3,7 @@ layout: post
 title: 阻塞IO和非阻塞IO
 date: 2022-2-14 13:16:43 +0800
 categories: IO技术
-tags: io 阻塞 非阻塞 
+tags: io
 author: Rxsi
 ---
 

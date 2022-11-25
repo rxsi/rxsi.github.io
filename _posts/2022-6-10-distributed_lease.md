@@ -3,7 +3,7 @@ layout: post
 title: Lease机制
 date: 2022-6-10 20:00:01 +0800
 categories: 分布式
-tags: 分布式 lease 
+tags: lease 
 author: Rxsi
 ---
 

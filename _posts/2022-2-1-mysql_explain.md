@@ -3,7 +3,7 @@ layout: post
 title: Mysql Explain解析
 date: 2022-2-1 15:06:13 +0800
 categories: MySQL
-tags: mysql explain 
+tags: explain 
 author: Rxsi
 ---
 

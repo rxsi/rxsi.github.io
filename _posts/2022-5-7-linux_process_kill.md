@@ -3,7 +3,7 @@ layout: post
 title: 进程宕机原因分析
 date: 2022-5-7 10:58:52 +0800
 categories: linux
-tags: linux 进程
+tags: process crash
 author: Rxsi
 ---
 

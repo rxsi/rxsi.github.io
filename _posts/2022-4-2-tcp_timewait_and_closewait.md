@@ -3,7 +3,7 @@ layout: post
 title: TIME_WAIT&CLOSE_WAIT
 date: 2022-4-2 15:36:57 +0800
 categories: TCP
-tags: tcp TIME_WAIT CLOSE_WAIT
+tags: TIME_WAIT CLOSE_WAIT
 author: Rxsi
 ---
 

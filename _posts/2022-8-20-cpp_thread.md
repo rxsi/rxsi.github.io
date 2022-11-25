@@ -3,7 +3,7 @@ layout: post
 title: 线程
 date: 2022-8-20 20:33:04 +0800
 categories: C++
-tags: C++ 线程同步 线程局部存储
+tags: 线程同步 线程局部存储 thread
 author: Rxsi
 ---
 

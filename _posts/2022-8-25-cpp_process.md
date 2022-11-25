@@ -3,7 +3,7 @@ layout: post
 title: 进程
 date: 2022-8-25 19:34:34 +0800
 categories: C++
-tags: C++ 进程通信
+tags: 进程通信 process
 author: Rxsi
 ---
 

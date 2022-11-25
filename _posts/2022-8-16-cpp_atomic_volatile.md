@@ -3,7 +3,7 @@ layout: post
 title: C++原子性和内存模型
 date: 2022-8-16 15:49:03 +0800
 categories: C++
-tags: C++ atomic volatile 
+tags: atomic volatile 
 author: Rxsi
 ---
 

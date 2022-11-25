@@ -3,7 +3,7 @@ layout: post
 title: 分布式事务
 date: 2022-3-23 16:48:1 +0800
 categories: 分布式
-tags: 分布式 事务 
+tags: 事务 
 author: Rxsi
 ---
 
