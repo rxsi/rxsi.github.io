@@ -274,7 +274,9 @@ int tcp_rcv_state_process(struct sock *sk, struct sk_buff *skb)
 ```
 ### 第三次握手丢失，会发生什么？
 由于客户端此时已经接收到了`SYN-ACK`报文，因此成功进入了`ESTABLISHED`状态，然后会向服务端发送一个`ACK`报文，但是注意，**ACK 报文是不会重发的，因此当该报文丢失之后只能等待对方重发相应的报文再促使客户端下发 ACK 报文**。
+
 所以第三次握手包丢失，则会使服务端一直重发`SYN-ACK`报文，直到收到回复或者达到最大重传次数（`tcp_synack_retries（默认值是5）`）。
+
 如果服务端最终因为达到了最大重发次数而转为`CLOSED`状态，那么此时处于`ESTABLISHED`状态的客户端如果没有开启 keepalive 机制（连接空闲2小时之后，开始探测，每次间隔75秒，总共探测9次）者没有进行任何数据包的发送，那么客户端就会一直处于当前状态，直到进程关闭。否则则会由于心跳超时或者数据包重传达到上限而关闭连接，数据包的重传由以下两个参数控制：
 ```shell
 rxsi@VM-20-9-debian:~$ cat /proc/sys/net/ipv4/tcp_retries1
