@@ -206,7 +206,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 
 - pthread_t *thread：pthread_t 本质上是一个32位的无符号整数，当创建成功之后，可通过该参数得到对应的线程ID
 - const pthread_attr_t *attr：指定了线程的属性，一般为 NULL
-- void _(_start_routine) (void *)：目标线程函数，这个函数的调用方式要是 cdecl（即C风格的调用类型，默认情况下C/C++都是该调用风格；常见还有 stdcall, __fastcall 等） 
+- void _(_start_routine) (void *)：目标线程函数，这个函数的调用方式要是 cdecl（即C风格的调用类型，默认情况下C/C++都是该调用风格；常见还有 __stdcall, __fastcall 等） 
    - __cdecl：C/C++ 默认的缺省方式，函数参数从右至左入栈，且由调用者自行清除这些参数，即生成的二进制可执行代码中都含有对应的清栈代码，因此文件体积会比较大。比方说有一个函数A，那么所有调用A函数的地方都会生成一个相对应的清栈代码
    - __stdcall：函数参数从右至左入栈，被调用函数自行清理内存栈，这样文件体积会小点。
         ```cpp
