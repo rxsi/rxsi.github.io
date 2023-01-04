@@ -216,6 +216,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
         ```
 - void *args：传递给线程函数的参数
 
+应用示例：
 ```cpp
 // linux 平台的底层线程函数
 // g++ thread_test.cpp -o thread_test -lpthread
@@ -424,17 +425,20 @@ int pthread_mutexattr_gettype(const pthread_mutexattr_t* restrict attr, int* res
 ```
 可选属性有：
 
-1. `PTHREAD_MUTEX_NORMAL`
+1. `PTHREAD_MUTEX_NORMAL`：
+
     普通锁，不同线程只有该锁被释放之后才能再被获取
     
     **如果同一个线程连续加锁会导致阻塞在第二个加锁语句，而如果使用的是 trylock，则返回 EBUSY 错误码**
 
-2. `PTHREAD_MUTEX_ERRORCHECK`
+2. `PTHREAD_MUTEX_ERRORCHECK`：
+
     检错锁，不同线程只有该锁被释放之后才能再被获取
     
     **如果同一个线程连续加锁会返回 EDEADLK 错误码**
 
-3. `PTHREAD_MUTEX_RECURSIVE`
+3. `PTHREAD_MUTEX_RECURSIVE`：
+
     可重入锁，不同线程必须等锁被释放之后才能再次加锁
 
     **同一个线程重复加锁会使锁的引用计数+1，每次调用解锁则是引用计数-1，因此需要成对出现**
@@ -950,8 +954,7 @@ int main()
 }
 ```
 ### linux读写锁
-读写锁和互斥体的差别在于：
-读锁和读锁是共享的，而写锁和写锁、写锁和读锁都是互斥的
+读写锁和互斥体的差别在于：读锁和读锁是共享的，而写锁和写锁、写锁和读锁都是互斥的
 #### 初始化
 ```cpp
 int pthread_rwlock_init(pthread_rwlock_t* rwlock, const pthread_rwlockattr_t* attr); // 属性一般为NULL即可
@@ -1057,11 +1060,12 @@ int main()
 ```
 ### std::mutex互斥体
 windows 平台和 linux 平台通用
+
 正常的做法是 lock 和 unlock 成对出现，为了避免出现差错，因此使用 RAII 封装了几个接口，类似于智能指针的做法
 ```cpp
 lock_guard      // 基于作用域的互斥体管理,即使用{}划定范围,当调用时会自动调用 std::mutex 的lock方法,当出了作用域时会自动调用 std::mutex 的unlock方法
 // 示例：
-sd::mutex m;
+std::mutex m;
 std::lock_guard<std::mutex> guard(m);
         
 unique_lock     // 灵活的互斥体管理,可以转让控制权等，用在条件变量的wait时，因为锁要在wait内部释放，所以需要转让管理权。同时读写锁的写锁也是通过他管理
