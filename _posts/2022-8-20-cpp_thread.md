@@ -330,9 +330,10 @@ void start_fun()
 #include <pthread.h>
 void* thread_proc(void* args)
 {
-    pthread_t* tid1 = (pthread_t*) args; // 输出指向线程的内存地址，不是全系统唯一的，因为可能不同进程共享了同一块内存
-    int tid2 = syscall(SYS_gettid); // 全系统唯一，是LWP的ID（轻量级进程，早期linux系统的线程是通过进程实现的）
+    pthread_t* tid1 = (pthread_t*) args; // 输出指向线程的内存地址，不是全系统唯一的，因为可能不同进程共享了同一块内存。同个进程中调用这种方式没有问题，但是不同进程就可能得到相同的输出
+    int tid2 = syscall(SYS_gettid); // 全系统唯一，是LWP的ID（轻量级进程，早期linux系统的线程是通过进程实现的），getpid是获取线程所属进程的pid，要获取线程的唯一id就必须要通过这个方法，实际获取的是线程对应task_struct的pid。
     pthread_t tid3 = pthread_self(); // 输出指向线程的内存地址，不是全系统唯一的，因为可能不同进程共享了同一块内存
+    pid_t pid = getpid(); // 这里得到的是当前线程所归属的进程的pid，与主线程的pid1一致
 }
 
 int main()
@@ -340,6 +341,8 @@ int main()
     pthread_t tid;
     pthread_create(&tid, NULL, thread_proc, &tid);
     pthread_join(tid, NULL);
+    pid_t pid1 = getpid();
+    int tid2 = syscall(SYS_gettid); // 由于主线程实际就是当前进程，因此此处的tid2与pid1是一致的。
     return 0;
 }
 ```
