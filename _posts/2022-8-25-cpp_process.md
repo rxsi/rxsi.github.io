@@ -818,7 +818,7 @@ int msgsnd(int msqid, const void* msgp, size_t msgz, int msgflg);
 // 从消息队列中取出消息,调用者需要有读权限
 ssize_t msgrcv(int msqid, void* msgp, size_t msgsz, long msgtyp, int msgflg);
 ```
-`void* msgp` 指向一个结构体，用以存放实际的消息数据，这个结构体名可以自定义，但是必须要含有`long mtype`和`char mtext[xxx]`这两个字段，这是`msg.h`中的规定
+void* msgp 指向一个结构体，用以存放实际的消息数据，这个结构体名可以自定义，但是必须要含有`long mtype`和`char mtext[xxx]`这两个字段，这是 msg.h 中的规定
 ```cpp
 struct msgbuf
 {
@@ -826,13 +826,13 @@ struct msgbuf
     char mtext[1]; // 消息体，该大小由size_t msgz指定
 };
 ```
-当已有插入消息的总字节数超过了`msg_qbytes`字段（这个字段定义在`msqid_ds`结构体中），或者总消息数量超过了该值（这是为了避免无限插入长度为0的消息），则插入失败返回-1
+当已有插入消息的总字节数超过了`msg_qbytes`字段（这个字段定义在 msqid_ds 结构体中），或者总消息数量超过了该值（这是为了避免无限插入长度为0的消息），则插入失败返回-1
 
-当读取消息时，如果`msgrcv`函数的`msgsz`参数小于所要接收的消息的`mtext`长度，则如果设置了`MSG_NOERROR`那么会截断该消息的`mtext`字段，并把新消息传入`void* msgp`所指向的结构体中，并移除原消息；否则读取失败返回-1，并且`errno = E2BIG`，原消息不会被移除。
+当读取消息时，如果 msgrcv 函数的`msgsz`参数小于所要接收的消息的 mtext 长度，则如果设置了 MSG_NOERROR 那么会截断该消息的 mtext 字段，并把新消息传入`void* msgp`所指向的结构体中，并移除原消息；否则读取失败返回-1，并且 errno = E2BIG，原消息不会被移除。
 
-对于消息类型的读取，是通过`msgrcv`函数中的`msgtyp`参数控制：
+对于消息类型的读取，是通过 msgrcv 函数中的`msgtyp`参数控制：
 1. msgtype == 0：消息队列中的首个消息将被读取
-2. msgtyp > 0：消息队列中的`msgbuf`中与之相等的`mtype`的消息会被读取
+2. msgtyp > 0：消息队列中的 msgbuf 中与之相等的 mtype 的消息会被读取
 3. msgtyp < 0：消息队列中第一个小于等于该**绝对值**的消息会被读取(实现对一个范围的消息进行读取)
 
 #### 阻塞和非阻塞
