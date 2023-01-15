@@ -951,7 +951,7 @@ linux 内核使用 vm_area_struct 结构表示一个独立的虚拟内存区域�
 
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 /*
-void* addr：用户进程中所要映射的用户空间的起始地址，通常为NULL（由内核指定）
+void* addr：用户进程中所要映射的用户空间的起始地址，通常为NULL（由内核指定，内核根据/proc/sys/vm/mmap_min_addr地址计算）
 size_t length：要映射的内存区域的大小
 int prot：期望的内存保护标志，不能与文件的打开模式冲突
     - PORT_EXEC：页内容可以被执行
@@ -1003,7 +1003,7 @@ int flags：标志位
 return：成功返回0，出错返回-1
 */
 ```
-当映射区被标记为`MAP_SHARED`，那么我们修改了处于内存映射区的文件内容，那么内核将会在稍后某个时刻写入到磁盘文件。我们可以使用`msync`函数立即执行写回操作。
+当映射区被标记为`MAP_SHARED`，那么我们修改了处于内存映射区的文件内容，那么内核将会在稍后某个时刻写入到磁盘文件。我们可以使用 msync 函数立即执行写回操作。
 #### 示例代码
 匿名共享，只适用于亲缘关系的进程：
 ```cpp
@@ -1083,7 +1083,7 @@ int main()
 }
 ```
 ### Posix共享内存（随内核、基于tmpfs虚拟文件系统实际挂载路径为/dev/shm)
-底层本质还是`mmap`共享内存机制，只不过是基于`共享内存区对象`实现的方式
+底层本质还是 mmap 共享内存机制，只不过是基于`共享内存区对象`实现的方式
 #### shm_open函数
 ```cpp
 #include <sys/mman.h>
