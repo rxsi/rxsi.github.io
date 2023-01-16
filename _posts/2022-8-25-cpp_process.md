@@ -138,9 +138,9 @@ fork出错有两种可能性：
         所以如果使用了 2 选项，那么就可能出现要申请大内存，比如一次性申请 4GB 内存，且明明内存空间还足够（使用`free`命令可查当前内存空间使用情况），却无法分配内存的情况
 
 #### 资源影响
-对于已经打开的管道和 FIFO，子进程将会获得父进程的副本；对于 System V 消息队列没有任何影响，而 Posix 消息队列会获得父进程的副本；对于共享内存（mmap共享内存、Posix共享内存、System V共享内存）会继承和保留映射关系。
+对于已经打开的管道和 FIFO，子进程将会获得父进程的副本；对于 System V 消息队列没有任何影响，而 Posix 消息队列（消息队列描述符实际就是普通的文件描述符）会获得父进程的副本；对于共享内存（mmap共享内存、Posix共享内存、System V共享内存）会继承和保留映射关系。
 
-子进程会继承父进程开启的文件描述符（打开的文件、管道文件、套接字等都是文件描述符），如果创建子进程的目的是使用`exec`生成新的进程，那么可以给文件描述设置`FD_CLOEXEC`标记，这样当子进程执行`exec`族的函数时，该文件描述符将会自动关闭（不设置的话 exec 出来的新进程是会继承原有的文件描述符的），方式如下：
+子进程会继承父进程开启的文件描述符（打开的文件、管道文件、套接字等都是文件描述符），如果创建子进程的目的是使用`exec`生成新的进程，那么可以给文件描述设置`FD_CLOEXEC`标记，这样当子进程执行`exec`族的函数时，该文件描述符将会自动关闭（Posix 消息队列默认会添加 FD_CLOEXEC 属性），方式如下：
 ```cpp
 fcntl (desc, F_SETFD, FD_CLOEXEC);
 ```
@@ -190,15 +190,15 @@ pid_t getppid();
     - 管道（pipe）
     - 有名管道（fifo）
     - 信号（signal）
-2. SystemV IPC对象
+2. SystemV IPC对象：以整型 id 作标识
     - 共享内存（share memory）
-    - 消息队列（message queue）
+    - 消息队列（message queue）：支持指定优先级接收，不支持epoll等，
     - 信号量（semaphore）
 3. BSD
     - 套接字（socket）
-4. Posix IPC 对象
+4. Posix IPC 对象：以 /somename 形式的字符作标识生成标识文件，需要unlink，因此进程宕机会造成残留标识文件
     - 共享内存（share memory）
-    - 消息队列（message queue）
+    - 消息队列（message queue）：支持mq_notify，支持epoll等，
     - 信号量（semaphore）
 
 ### 管道（Pipe）与有名管道（FIFO)（随进程）
@@ -554,7 +554,7 @@ mq_receive 函数的 len 参数不能小于 mq_attr 结构体中的 mq_msgsize �
 #### mq_notify函数（重点区别）
 用以实现异步事件通知，告知何时有一个消息放置到了某个空的消息队列中。
 
-这是区别于System V消息队列的一个重要特性，如果没有异步事件通知，那么要么采用阻塞的形式调用recv函数，要么采用非阻塞+轮询的方式，这都造成了一定的CPU资源浪费。
+这是区别于System V消息队列的一个重要特性，如果没有异步事件通知，那么要么采用阻塞的形式调用 recv 函数，要么采用非阻塞+轮询的方式，这都造成了一定的CPU资源浪费。
 ```c
 #include <mqueue.h>
 int mq_notify(mqd_t mqdes, const struct isgevent* notification);
@@ -593,7 +593,7 @@ struct sigevent
 - MQ_OPEN_MAX：一个进程能够同时拥有的打开着的消息队列的数量
 - MQ_PRIO_MAX：消息最大优先级+1（至少为32）
 
-**同时消息队列不能直接应用于select/epoll中，但是可以借助管道实现在select中应用。因为管道可以应用于select/epoll中，因此我们可以将向管道写入消息封装为一个回调函数，并注册在消息队列中，这样当消息队列接收到消息时，就会往管道写入消息，进而触发select/epoll事件。**
+在 linux 系统中，Posix 消息队列的 mq_open 返回的消息队列描述符本质上就是一个通用的文件描述符，因此是可以直接应用在 select/poll/epoll 中的，同时我们也可以借助管道实现通用的设计。我们可以将向管道写入消息封装为一个回调函数，并注册在消息队列中，这样当消息队列接收到消息时，就会往管道写入消息，进而触发select/epoll事件。
 #### 示例代码
 ```cpp
 #include <stdio.h>
