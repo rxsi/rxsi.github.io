@@ -271,7 +271,7 @@ PyMethod_New(PyObject *func, PyObject *self) // func函数对象，self是实例
     return (PyObject *)im;
 }
 ```
-可以看到最终返回的是一个 **新创建 **的方法对象，称为`bound method`，如以下输出：
+可以看到最终返回的是一个**新创建**的方法对象，称为`bound method`，如以下输出：
 ```python
 >>> print(a.FuncA)
 <bound method A.FuncA of <__main__.A object at 0x0000018D417A89B0>>
@@ -286,15 +286,22 @@ PyMethod_New(PyObject *func, PyObject *self) // func函数对象，self是实例
 ```c
 a.FuncA = a.FuncA
 ```
-后面`a.FuncA`得到的是一个 bound Method，这个对象保存了 a 的引用，而前面的`a.FuncA`则又把这个函数对象存入了实例对象的`__dict__`属性字典中，最终形成了** 循环引用**，因此会造成内存泄漏。
+后面`a.FuncA`得到的是一个 bound Method，这个对象保存了 a 的引用，而前面的`a.FuncA`则又把这个函数对象存入了实例对象的`__dict__`属性字典中，最终形成了**循环引用**，因此会造成内存泄漏。
 > 题外话：
+>
 > 从上面可知，每次调用 a.FuncA 都会生成一个临时的方法对象，因此下面的使用方式会带来一些额外的性能开销：
+>
 > for i in range(100000):
-> a.FuncA()
+>
+>   a.FuncA()
+>
 > 要实现更高的性能可修改为：
+>
 > f = a.FuncA
+>
 > for i in range(100000):
-> f()
+>
+>   f()
 
 ## a.obj的查找顺序
 再来看问题 2，obj 是一个实现了`__get__`和`__set__`魔法函数的对象，即符合数据描述符的定义。后面的`a.obj`调用的是`obj.__get__`魔法函数，而前面的则调用的是`obj.__set__`魔法函数，并不会把 obj 对象保存到实例对象的属性字典中，因此不会有内存泄漏问题。
