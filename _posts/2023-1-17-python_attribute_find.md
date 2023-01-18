@@ -162,7 +162,7 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict) 
 ## a.FuncA的查找顺序
 那么当我们调用`a.FuncA`时是从哪一层获取到目标属性的呢？
 
-我们知道 FuncA 是一个定义在类 A 中的函数，在代码运行时会生成一个函数对象，且存放于在类 A 的 __dict__ 中：
+我们知道 FuncA 是一个定义在类 A 中的函数，在代码运行时会生成一个函数对象，且存放于在类 A 的`__dict__`中：
 ```python
 >>> print(A.__dict__)
 {'FuncA': <function A.FuncA at 0x00000254011C9AE8>} # 省略部分无用输出
