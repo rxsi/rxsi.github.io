@@ -22,6 +22,7 @@ a = A()
 a.FuncA = a.FuncA
 ```
 以上代码是否会造成内存泄漏问题？
+
 另外根据这个问题涉及到的相关特性，再思考下这个问题：
 ```python
 class Descr:
@@ -46,8 +47,10 @@ a = A()
 a.obj = a.obj
 ```
 以上代码是否会造成内存泄漏？如果把`__set__`去掉呢？
+<!--more-->
 # 属性查找
 要解答上面的两个问题，我们需要先了解 Python 是如何进行属性查找的。
+
 我们知道`a.FuncA`实际等价于`getattr(a, "FuncA")`，通过 getattr 函数，我们从源码入手查看底层的实现奥秘。要搜索某个内置函数的源码实现，一种技巧就是直接搜索对应内置函数名的字符串形式，通过搜索我们可以定位到代码如下：
 ```c
 static PyMethodDef builtin_methods[] = {
@@ -158,12 +161,14 @@ _PyObject_GenericGetAttrWithDict(PyObject *obj, PyObject *name, PyObject *dict) 
 如果以上都查找不到，那么抛出异常
 ## a.FuncA的查找顺序
 那么当我们调用`a.FuncA`时是从哪一层获取到目标属性的呢？
-我们知道 FuncA 是一个定义在类 A 中的函数，在代码运行时会生成一个函数对象，且存放于在类 A 的 __dict__ 中：
+
+我们知道 FuncA 是一个定义在类 A 中的函数，在代码运行时会生成一个函数对象，且存放于在类 A 的`__dict__`中：
 ```python
 >>> print(A.__dict__)
 {'FuncA': <function A.FuncA at 0x00000254011C9AE8>} # 省略部分无用输出
 ```
 那么根据上面源码部分可知，将会根据函数对象是否实现了`__get__`和`__set__`魔法函数而进入不同的分支
+
 查看函数对象对应的 PyTypeObject 实现：
 ```python
 PyTypeObject PyFunction_Type = {
@@ -266,7 +271,7 @@ PyMethod_New(PyObject *func, PyObject *self) // func函数对象，self是实例
     return (PyObject *)im;
 }
 ```
-可以看到最终返回的是一个 **新创建 **的方法对象，称为`bound method`，如以下输出：
+可以看到最终返回的是一个**新创建**的方法对象，称为`bound method`，如以下输出：
 ```python
 >>> print(a.FuncA)
 <bound method A.FuncA of <__main__.A object at 0x0000018D417A89B0>>
@@ -276,19 +281,26 @@ PyMethod_New(PyObject *func, PyObject *self) // func函数对象，self是实例
 <function A.FuncA at 0x0000018764629A60>
 ```
 同时这个方法对象在内部保存了实例对象的引用，因为这个方法对象需要把实例对象（即 self 参数）作为首个函数参数进行调用。
+
 至此，我们再回看问题 1 的定义方式：
 ```c
 a.FuncA = a.FuncA
 ```
-后面`a.FuncA`得到的是一个 bound Method，这个对象保存了 a 的引用，而前面的`a.FuncA`则又把这个函数对象存入了实例对象的`__dict__`属性字典中，最终形成了** 循环引用**，因此会造成内存泄漏。
-> 题外话：
-> 从上面可知，每次调用 a.FuncA 都会生成一个临时的方法对象，因此下面的使用方式会带来一些额外的性能开销：
-> for i in range(100000):
-> a.FuncA()
-> 要实现更高的性能可修改为：
-> f = a.FuncA
-> for i in range(100000):
-> f()
+后面`a.FuncA`得到的是一个 bound Method，这个对象保存了 a 的引用，而前面的`a.FuncA`则又把这个函数对象存入了实例对象的`__dict__`属性字典中，最终形成了**循环引用**，因此会造成内存泄漏。
+
+插个题外话：
+
+从上面可知，每次调用 a.FuncA 都会生成一个临时的方法对象，因此下面的使用方式会带来一些额外的性能开销：
+```python
+for i in range(100000):
+    a.FuncA()
+```
+要实现更高的性能，则可修改为：
+```python
+f = a.FuncA()
+for i in range(100000)
+    f()
+```
 
 ## a.obj的查找顺序
 再来看问题 2，obj 是一个实现了`__get__`和`__set__`魔法函数的对象，即符合数据描述符的定义。后面的`a.obj`调用的是`obj.__get__`魔法函数，而前面的则调用的是`obj.__set__`魔法函数，并不会把 obj 对象保存到实例对象的属性字典中，因此不会有内存泄漏问题。
