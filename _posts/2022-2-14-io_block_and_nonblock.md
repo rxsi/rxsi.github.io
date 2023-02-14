@@ -334,7 +334,7 @@ if (bind(listenfd, (sockaddr*)&bindaddr, sizeof(bindaddr)) == -1){
     作用1：决定全连接队列的上限 = min(SOMAXCONN, backlog)；
 
     作用2：决定半连接队列的上限 = min(SOMAXCONN, backlog, tcp_max_syn_backlog)；
-    
+
 - 返回值：-1表示失败
 
 ```cpp
@@ -351,7 +351,7 @@ if (listen(listenfd, SOMAXCONN) == -1){
 -  参数1：套接字 
 -  参数2：一个空的 sockaddr_in 结构体指针，用以保存客户端信息。一般是通过 sockaddr_in 指针转换为 sockaddr 指针。
 -  参数3：指向 socklen_t 的指针，本质就是一个 int 指针，这里传入指针的原因是第二个传入的 sockaddr 参数会被底层填充数据，因此传入长度指针用以标识填充后的新大小。
--  返回值：-1 表示错误 
+-  返回值：-1 表示错误，函数的功能是把连接从全连接队列中取出
 -  在阻塞和非阻塞IO下调用方式有区别：
     - 阻塞： 
     ```cpp
@@ -359,7 +359,7 @@ if (listen(listenfd, SOMAXCONN) == -1){
     socklen_t clientaddrlen = sizeof(clientaddr);
     int clientfd = accept(listenfd, (sockaddr*)&clientaddr, &clientaddrlen);
     if (clientfd != -1){ // 如果后续不调用recv函数，那么服务端的接收窗口会一步步被塞满，而最终导致客户端的发送窗口也被塞满。
-        std::cout << "accept a client connection. " << std::endl;
+            std::cout << "accept a client connection. " << std::endl;
     }
     ```
 
