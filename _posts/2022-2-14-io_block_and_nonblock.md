@@ -446,7 +446,19 @@ uint16_t htons(uint16_t netshort); // 将 short 类型转换为网络字节序
 
 **判断本机字节序的方式：**
 
-使用一个 2 字节的十六进制数，如 unsigned short num = 0x1234，然后将其强行转换为 1 字节的 char 类型，**会把高字节部分丢弃**，如 char mode = (char)&num。也就是如果是小端序，那么结果是`34`，大端序则为`12`。
+Intel 的 CPU 是小端序，以下我们通过代码进行验证：
+
+```cpp
+#include <iostream>
+
+int main()
+{
+    unsigned short a = 0x1234;
+    unsigned char b = (unsigned char)a; // int转char会丢失精度，即保留内存低地址部分而舍弃内存高地址部分
+    printf("%x\n", a); // 0x1234
+    printf("%x\n", b); // 0x34，保留的低地址部分是34，说明是小端序
+}
+```
 ## SO_REUSEADDR 和 SO_REUSEPORT
 ### SO_REUSEADDR
 默认情况下，一个 Socket 以五元组作为唯一标识：`{<protocol>, <src addr>, <src port>, <dest addr>, <dest port>}`。
