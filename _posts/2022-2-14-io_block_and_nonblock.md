@@ -77,23 +77,23 @@ if (clientfd == -1)
 -  参数3：addr 变量的大小，可由 sizeof 计算。在这里该参数不是一个指针，但是在`accept()`函数中则需要的是一个指针类型。 
 -  返回值：当调用失败时返回 -1，且错误信息可由 errno 中获取 
 -  在阻塞和非阻塞IO下调用方式有区别：
-   - 阻塞：connect 对应的是 TCP 三次握手的发送 SYN 操作（CLOSE -> SYN_SEND），因此在阻塞模式下会等待服务端返回的`SYN-ACK`报文（SYS_SEND -> ESTABLISH），至少阻塞一个RTT时间。123
+    - 阻塞：connect 对应的是 TCP 三次握手的发送 SYN 操作（CLOSE -> SYN_SEND），因此在阻塞模式下会等待服务端返回的`SYN-ACK`报文（SYS_SEND -> ESTABLISH），至少阻塞一个RTT时间。
+    ```cpp
+    // 阻塞模式下
+    sockaddr_in serveraddr;
+    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS); // 解析服务端ip地址
+    serveraddr.sin_port = htons(SERVER_PORT);
+    if (connect(clientfd, (sockaddr*)&serveraddr, sizeof(serveraddr)) == -1)
+    {
+        std::cout << "connect socket error." << std::endl;
+        close(clientfd);
+        return -1;
+    }
+    ```
 
-```cpp
-// 阻塞模式下
-sockaddr_in serveraddr;
-serveraddr.sin_family = AF_INET;
-serveraddr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS); // 解析服务端ip地址
-serveraddr.sin_port = htons(SERVER_PORT);
-if (connect(clientfd, (sockaddr*)&serveraddr, sizeof(serveraddr)) == -1)
-{
-    std::cout << "connect socket error." << std::endl;
-    close(clientfd);
-    return -1;
-}
-```
+    - 非阻塞： 非阻塞模式下，调用会立即返回，首先需要根据返回状态判断是否需要重试，其次需要在实际使用该clientfd之前，借助`epoll`等多路复用技术检测是否已经可写，并且在 linux 平台还需要额外检测判断该 socket 是否报错（在socket 报错的情况下，会返回可写状态，即返回1）
 
-   - 非阻塞： 非阻塞模式下，调用会立即返回，首先需要根据返回状态判断是否需要重试，其次需要在实际使用该clientfd之前，借助`epoll`等多路复用技术检测是否已经可写，并且在 linux 平台还需要额外检测判断该 socket 是否报错（在socket 报错的情况下，会返回可写状态，即返回1）  
     ```cpp
     // 非阻塞模式下
     sockaddr_in serveraddr;
@@ -166,7 +166,7 @@ if (connect(clientfd, (sockaddr*)&serveraddr, sizeof(serveraddr)) == -1)
 - 返回值：当处于阻塞模式下时，会阻塞到可以完整发送数据时才返回，如当对端的接收窗口过小时，会导致一直阻塞，如果返回的值不等于 len，则代表发送失败；在非阻塞模式下，需要考虑成功发送一部分（0 < ret < len），-1 和 ==len 的情况。**当 ==0 时，一般意味着连接断开，如果是主动发送 0 字节长度的数据，虽然返回值依然是 0 但是底层会过滤掉，不会发送给对端，因此我们一般使用是否等于 len 去判断，而不是直接判断0。接收端的 recv 则可通过是否为0进行判断。**
 - 在阻塞和非阻塞IO下调用方式有区别：
    - 阻塞：在阻塞模式下，会一直阻塞到发送完预设的数据长度，除非发生异常
-   
+
     **本质上是两次阻塞：1.阻塞等待有足够的写入空间；2.阻塞进行数据的从用户态到内核态的copy**。
     ```cpp
     int ret = send(clientfd, SEND_DATA, strlen(SEND_DATA), 0); // 这里使用的是阻塞模式,当无法发送时,会阻塞在这里.
