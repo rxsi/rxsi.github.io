@@ -84,7 +84,8 @@ sockaddr_in serveraddr;
 serveraddr.sin_family = AF_INET;
 serveraddr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS); // 解析服务端ip地址
 serveraddr.sin_port = htons(SERVER_PORT);
-if (connect(clientfd, (sockaddr*)&serveraddr, sizeof(serveraddr)) == -1){
+if (connect(clientfd, (sockaddr*)&serveraddr, sizeof(serveraddr)) == -1)
+{
     std::cout << "connect socket error." << std::endl;
     close(clientfd);
     return -1;
