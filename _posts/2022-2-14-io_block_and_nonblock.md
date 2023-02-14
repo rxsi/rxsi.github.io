@@ -135,23 +135,23 @@ if (clientfd == -1)
     tv.tv_usec = 0;
     if (select(clientfd + 1, NULL, &writeset, NULL, &tv) != 1) // 阻塞等待一段时间让其成功建立三次握手，如果建立成功那么会返回可写，当然也可能是出错了，所以下面还要继续判断
     { 
-        std::cout << "[select] connect to server error." << std::endl; // 三次握手失败了
-        close(clientfd);
-        return -1;
+            std::cout << "[select] connect to server error." << std::endl; // 三次握手失败了
+            close(clientfd);
+            return -1;
     }
     // 补充判断阶段:
     int err;
     socklen_t len = static_cast<socklen_t>(sizeof(err));
     if(getsockopt(clientfd, SOL_SOCKET, SO_ERROR, &err, &len) < 0){ // 证明可写事件是因为出错了
-        close(clientfd);
-        return -1;
+            close(clientfd);
+            return -1;
     }
     if (err == 0){ // 建立成功
-        std::cout << "connect to server successfully." << std::endl;
+            std::cout << "connect to server successfully." << std::endl;
     } else{ // 出现异常
-        std::cout << "connect to server error." << std::endl;
-        close(clientfd);
-        return -1;
+            std::cout << "connect to server error." << std::endl;
+            close(clientfd);
+            return -1;
     }
     ```
 
@@ -171,12 +171,12 @@ if (clientfd == -1)
     int ret = send(clientfd, SEND_DATA, strlen(SEND_DATA), 0); // 这里使用的是阻塞模式,当无法发送时,会阻塞在这里.
     if (ret != strlen(SEND_DATA))
     {
-        std::cout << "send data error." << std::endl;
-        break;
+            std::cout << "send data error." << std::endl;
+            break;
     } 
     else
     {
-        std::cout << "send data successfully, count = " << count << std::endl;
+            std::cout << "send data successfully, count = " << count << std::endl;
     }
     ```
 
@@ -242,22 +242,24 @@ if (clientfd == -1)
 - 返回值：在阻塞模式下，==0 意味着连接断开，-1 异常，>0 接收到数据（注意不一定等于预设的len）；非阻塞模式下，-1 时需要考虑中断情况
 - 在阻塞和非阻塞IO下调用方式有区别：
    - 阻塞：
-    **本质上是两次阻塞：1.阻塞等待有可读数据；2.阻塞进行数据的从内核态到用户态的copy** 
+
+        **本质上是两次阻塞：1.阻塞等待有可读数据；2.阻塞进行数据的从内核态到用户态的copy** 
     ```cpp
     char buf[32] = {0}; 
     int ret = recv(clientfd, buf, 32, 0); // 当没有接收到数据时,会阻塞在这里
     if (ret > 0)
     {
-        std::cout << "recv successfully." << std::endl;
+            std::cout << "recv successfully." << std::endl;
     } 
     else
     {
-        std::cout << "recv data error." << std::endl;
+            std::cout << "recv data error." << std::endl;
     }
     ```
 
    - 非阻塞：
-    **只有copy时的一次阻塞** 
+
+        **只有copy时的一次阻塞** 
     ```cpp
     while (true)
     {
@@ -358,28 +360,28 @@ if (listen(listenfd, SOMAXCONN) == -1){
     socklen_t clientaddrlen = sizeof(clientaddr);
     int clientfd = accept(listenfd, (sockaddr*)&clientaddr, &clientaddrlen);
     if (clientfd != -1){ // 如果后续不调用recv函数，那么服务端的接收窗口会一步步被塞满，而最终导致客户端的发送窗口也被塞满。
-    std::cout << "accept a client connection. " << std::endl;
+        std::cout << "accept a client connection. " << std::endl;
     }
     ```
 
     - 非阻塞：  
     ```c
     while (true){
-        sockaddr_in clientaddr;
-        socklen_t clientaddrlen = sizeof(clientaddr);
-        int clientfd = accept(listenfd, (sockaddr*)&clientaddr, &clientaddrlen);
-        if (clientfd == -1){
-            if (errno == EINTR || errno == EWOULDBLOCK || errno == EAGAIN){
-                std::cout << "empty accept queue or interrupted by single" << std::endl;
-                continue;
-            } else{
-                std::cout << "accept error." << std::endl;
-                break; // 这里直接退出了，可能会导致会面的accept接收队列不被处理，需要谨慎。
+            sockaddr_in clientaddr;
+            socklen_t clientaddrlen = sizeof(clientaddr);
+            int clientfd = accept(listenfd, (sockaddr*)&clientaddr, &clientaddrlen);
+            if (clientfd == -1){
+                if (errno == EINTR || errno == EWOULDBLOCK || errno == EAGAIN){
+                    std::cout << "empty accept queue or interrupted by single" << std::endl;
+                    continue;
+                } else{
+                    std::cout << "accept error." << std::endl;
+                    break; // 这里直接退出了，可能会导致会面的accept接收队列不被处理，需要谨慎。
+                }
+            } else {
+                std::cout << "accept successfully." << std::endl;
+                // 将该clientfd保存起来，以作后续操作
             }
-        } else {
-            std::cout << "accept successfully." << std::endl;
-            // 将该clientfd保存起来，以作后续操作
-        }
     }
     ```
 
