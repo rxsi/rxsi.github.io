@@ -462,7 +462,7 @@ int main()
 ## SO_REUSEADDR 和 SO_REUSEPORT
 ### SO_REUSEADDR
 默认情况下，一个 Socket 以五元组作为唯一标识：`{<protocol>, <src addr>, <src port>, <dest addr>, <dest port>}`。
-`0.0.0.0` 代表着绑定本机所有网卡地址，因此在没有**SO_RESUEADDR**配置下，`0.0.0.0:21` 和 `192.168.0.1:21` 将会绑定失败。假设当前机器具有多个网卡，则各网卡之间的绑定关系如下表所示：
+0.0.0.0 代表着绑定本机所有网卡地址，因此在没有 SO_RESUEADDR 配置下，0.0.0.0:21 和 192.168.0.1:21 将会绑定失败。假设当前机器具有多个网卡，则各网卡之间的绑定关系如下表所示：
 
 | SO_REUSEADDR | socketA | socketB | Result |
 | --- | --- | --- | --- |
@@ -475,40 +475,42 @@ int main()
 | ON | 192.168.0.1:21 | 0.0.0.0:21 | OK |
 | ON/OFF | 0.0.0.0:21 | 0.0.0.0:21 | Error |
 
-所以`SO_REUSEADDR`的第一个关键作用就是解决绑定`0.0.0.0`情况下的冲突问题。
+**所以 SO_REUSEADDR 的第一个关键作用就是解决绑定 0.0.0.0 情况下的冲突问题。**
 
-同时当 TCP 主动关闭时，会进行`TIME_WAIT`状态，正常情况下会使程序无法在一段时间（2MSL，linux 默认是 60s）内无法重用对应的 IP 和端口，这使得应用程序关闭重启后会无法再绑定到对应的端口。
+同时当 TCP 主动关闭时，会进入`TIME_WAIT`状态，正常情况下会使程序无法在一段时间（2MSL，linux 默认是 60s）内无法重用对应的 IP 和端口，这使得应用程序关闭重启后会无法再绑定到对应的端口。
 
-开启`SO_REUSEADDR`后即可立即重用，这里要注意如果端口本身已经被某个 socket 绑定，且正处于
-`TCP_LISTEN`状态，则会绑定失败；否则，将会使得旧的 socket 被关闭，而后本程序才会绑定到这个端口。所以本身这个参数的设计意义在于进程意外宕机或者重启之后迅速去重新建立连接，不同的应用程序应该绑定不同的端口，而不是进行端口抢占。
+开启 SO_REUSEADDR 后即可立即重用，这里要注意如果端口本身已经被某个 socket 绑定，且正处于`TCP_LISTEN`状态，则会绑定失败；否则，将会使得旧的 socket 被关闭，而后本程序才会绑定到这个端口。所以本身这个参数的设计意义在于进程意外宕机或者重启之后迅速去重新建立连接，不同的应用程序应该绑定不同的端口，而不是进行端口抢占。
+
+**所以 SO_REUSEADDR 的第二个关键作用就是复用处于 TIME_WAIT 状态的连接地址。**
 
 在 BSD 上使用 SO_REUSEADDR 参数不需要关心其他 socket 是否设置了相同的 SO_REUSEADDR 参数，只要一方有设置，则设置方便可生效。**但是在 linux 上必须要所有 socket 都设置**。
 
 ### SO_REUSEPORT
-在`socket`服务端开发的过程中，我们遵循的步骤一般为：
+在 socket 服务端开发的过程中，我们遵循的步骤一般为：
 
-1. 调用`socket()`函数创建一个 listenfd
-2. 为该`listenfd`调用`bind()`函数绑定一个 IP + PORT
-3. 使用`listen()`函数监听该 listenfd
-4. 调用`accept()`函数阻塞/非阻塞的创建一个 clientfd
+1. 调用 socket() 函数创建一个 listenfd
+2. 为该 listenfd 调用 bind() 函数绑定一个 IP + PORT
+3. 使用 listen() 函数监听该 listenfd
+4. 调用 accept() 函数阻塞/非阻塞的创建一个 clientfd
 
 在早期的开发流程中，一般有两种多进程的开发模式：
 
 1. 使用的是一个父进程去调用`socket() + bind() + listen() + accept()`，当成功 accept 了一个 clientfd 之后，再 fork 出一个子进程去处理这个 clientfd，也就是说只会有一个进程进行监听。
-2. 使用的是一个父进程去调用`socket() + bind() + listen()`，然后 fork 出多个子进程去同时调用`accept()`函数对这个 listenfd 进行 accept 操作，这种方式同时有多个进程进行监听，但是这种做法早期会有惊群问题，不过在`linux2.6`之后，当多个进程同时调用 accept 同个 listenfd 时，使用的是`prepare_to_wait_exclusive`的**互斥**方式将所有的进程添加到 listenfd 的监听队列中，因此不再有惊群现象。
+2. 使用的是一个父进程去调用`socket() + bind() + listen()`，然后 fork 出多个子进程去同时调用 accept() 函数对这个 listenfd 进行 accept 操作，这种方式同时有多个进程进行监听，但是这种做法早期会有惊群问题，不过在 linux2.6 之后，当多个进程同时调用 accept 同个 listenfd 时，使用的是`prepare_to_wait_exclusive`的**互斥**方式将所有的进程添加到 listenfd 的监听队列中，因此不再有惊群现象。
 
 在上面的两种形式，终究都是为每一个 clientfd 创建一个处理进程，而 IO 事件实际上往往只是一瞬间的事情，因此在处理完成之后，要么阻塞的等待下一次事件的到来，要么就销毁进程/线程，可见这种做法有严重的性能问题
-为了使用提升性能，避免频繁的开创和销毁进程/线程，我们通常在一个进程中使用 IO 多路复用 + 非阻塞套接字的形式，以提升性能。一般来说我们会使用`EPOLL`去操作这些套接字，此时的做法演变为一个进程调用`socket() + bind() + listen() + epoll_create()`，然后使用 epoll_wait 去等待这个 listenfd 的事件。当这个 listenfd 有`EOPLLIN`事件后再相对应创建 clientfd 并仍然放入当前进程的`eventpoll`中，这样当前进程就可以同时处理多个套接字了。
 
-单个进程的处理方式无法发挥 CPU 的多核性能，而且在现在的网络流量环境中，单个进程的处理性能也存在瓶颈，因此需要使用多进程的方式。注意这里的多进程是固定的数量，往往是服务器启动之后就创建的，因此没有动态创建和销毁的性能问题。这时的做法是在一个父进程中使用`socket() + bind() + listen()`，然后 fork 出多个子进程，每个子进程创建自己的`eventpoll`，各自调用 epoll_wait 去监听这个 listenfd 的事件，注意对于所有的子进程来说，这个 listenfd 是同一个套接字。在这种做法下，当 listenfd 有相应可读的事件时，所有进程都会被唤醒，造成惊群问题。根本原因在于他添加到套接字等待队列的方式是`prepare_to_wait`的方式，即非互斥式的。
+为了使用提升性能，避免频繁的开创和销毁进程/线程，我们通常在一个进程中使用 IO 多路复用 + 非阻塞套接字的形式，以提升性能。一般来说我们会使用 epoll 去操作这些套接字，此时的做法演变为一个进程调用`socket() + bind() + listen() + epoll_create()`，然后使用 epoll_wait 去等待这个 listenfd 的事件。当这个 listenfd 有`EOPLLIN`事件后再相对应创建 clientfd 并仍然放入当前进程的 eventpoll 中，这样当前进程就可以同时处理多个套接字了。
 
-在没有`SO_REUSEPORT`标识和`EPOLLEXCLUSIVE`标识之前，要处理这个问题，只能采用手动加锁的形式。以`nginx`的处理措施为例：它利用了一把进程锁，每个进程在监听这个 listenfd 之前都会先尝试获取这把锁，如果获取成功则把这个 listenfd 放到自己的`eventpoll`中，并设置超时等待时间，在这段时间内如果成功的获取到事件则处理，否则时间到达之后则将其从自己的`eventpoll`中删除，并释放锁，实际上就是强制限定了同时间只会有一个进程进行监听。
+单个进程的处理方式无法发挥 CPU 的多核性能，而且在现在的网络流量环境中，单个进程的处理性能也存在瓶颈，因此需要使用多进程的方式。注意这里的多进程是固定的数量，往往是服务器启动之后就创建的，因此没有动态创建和销毁的性能问题。这时的做法是在一个父进程中使用`socket() + bind() + listen()`，然后 fork 出多个子进程，每个子进程创建自己的 eventpoll，各自调用 epoll_wait 去监听这个 listenfd 的事件，注意对于所有的子进程来说，这个 listenfd 是同一个套接字。在这种做法下，当 listenfd 有相应可读的事件时，所有进程都会被唤醒，造成惊群问题。根本原因在于他添加到套接字等待队列的方式是`prepare_to_wait`的方式，即非互斥式的。
 
-而现在`EPOLL`支持使用`EPOLLEXCLUSIVE`标识，我们在每个进程中都使用 epoll_ctl 为该 listenfd 添加`EPOLLEXCLUSIVE`属性，这样当有事件到来时，只会唤醒其中的一个进程，这样就避免了惊群问题。
+在没有 SO_REUSEPORT 标识和 EPOLLEXCLUSIVE 标识之前，要处理这个问题，只能采用手动加锁的形式。以 nginx 的处理措施为例：它利用了一把进程锁，每个进程在监听这个 listenfd 之前都会先尝试获取这把锁，如果获取成功则把这个 listenfd 放到自己的 eventpoll 中，并设置超时等待时间，在这段时间内如果成功的获取到事件则处理，否则时间到达之后则将其从自己的 eventpoll 中删除，并释放锁，实际上就是强制限定了同时间只会有一个进程进行监听。
 
-而 linux 提供了`SO_REUSEPORT`标识，这个标识的关键作用是允许多个 socket 同时监听相同的 IP + PORT，当有事件到来时，内核会自动负载均衡的选择唤醒其中一个 socket。因此在使用SO_REUSEPORT 时，我们的做法变成了创建多个进程，每个进程独立的使用`socket() + bind() + listen() + epoll_create()`，在这个阶段中多个进程所监听的是同一个 IP + PORT，对于每个进程来说他们的 listenfd 不是同一个套接字，但却是监听了同一个地址和端口。该 IP + PORT 有事件到达时，内核根据负载均衡原则唤醒其中的一个进程，即对应监听的`eventpoll`会监听到可读事件，这样就避免了惊群问题。
+而现在 epoll 支持使用`EPOLLEXCLUSIVE`标识，我们在每个进程中都使用 epoll_ctl 为该 listenfd 添加 EPOLLEXCLUSIVE 属性，这样当有事件到来时，只会唤醒其中的一个进程，这样就避免了惊群问题。
 
-注意的是`SO_REUSEPORT`参数必须在两条 socket 间同时设置，才能绑定成功，同时对于已经处于 TIME_WAIT 状态的 socket，绑定也会失败，因此一般同时使用`SO_REUSEADDR`和 `SO_REUSEPORT`参数。
+而 linux 提供了`SO_REUSEPORT`标识，这个标识的关键作用是允许多个 socket 同时监听相同的 IP + PORT，当有事件到来时，内核会自动负载均衡的选择唤醒其中一个 socket。因此在使用 SO_REUSEPORT 时，我们的做法变成了创建多个进程，每个进程独立的使用`socket() + bind() + listen() + epoll_create()`，在这个阶段中多个进程所监听的是同一个 IP + PORT，对于每个进程来说他们的 listenfd 不是同一个套接字，但却是监听了同一个地址和端口。该 IP + PORT 有事件到达时，内核根据负载均衡原则唤醒其中的一个进程，即对应监听的 eventpoll 会监听到可读事件，这样就避免了惊群问题。
+
+**注意的是 SO_REUSEPORT 参数必须在两条 socket 间同时设置，才能绑定成功，同时对于已经处于 TIME_WAIT 状态的 socket，绑定也会失败，因此一般同时使用 SO_REUSEADDR 和  SO_REUSEPORT 参数。**
 
 ```c
 // 复用地址和端口号
@@ -521,4 +523,4 @@ setsockopt(listenfd, SOL_SOCKET, SO_REUSEPORT, (char*)&on, sizeof(on));
 ```
 
 ### connect 报错
-在上面的描述中，我们是服务端的角色，而当我们是客户端且开启了 SO_REUSEADDR 和 SO_REUSEPORT 后，意味着允许同时有多个 socket 拥有相同的 `<protocol>, <src addr>, <src port>`，这在未开启这两个参数时，`bind()`阶段就已经报错了。一般来说，这种方式是比较少的，但是如果这样设置之后，在`connet()`阶段，如果这多个 socket 同时去连接一个目标地址和端口，则会由于整个五元组都相同，而造成异常。
+在上面的描述中，我们是服务端的角色，而当我们是客户端且开启了 SO_REUSEADDR 和 SO_REUSEPORT 后，意味着允许同时有多个 socket 拥有相同的 `<protocol>, <src addr>, <src port>`，这在未开启这两个参数时，bind() 阶段就已经报错了。一般来说，这种方式是比较少的，但是如果这样设置之后，在 connet() 阶段，如果这多个 socket 同时去连接一个目标地址和端口，则会由于整个五元组都相同，而造成异常。
