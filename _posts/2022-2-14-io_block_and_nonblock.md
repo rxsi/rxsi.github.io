@@ -508,9 +508,9 @@ int main()
 
 而现在 epoll 支持使用`EPOLLEXCLUSIVE`标识，我们在每个进程中都使用 epoll_ctl 为该 listenfd 添加 EPOLLEXCLUSIVE 属性，这样当有事件到来时，只会唤醒其中的一个进程，这样就避免了惊群问题。
 
-而 linux 提供了`SO_REUSEPORT`标识，这个标识的关键作用是允许多个 socket 同时监听相同的 IP + PORT，当有事件到来时，内核会自动负载均衡的选择唤醒其中一个 socket。因此在使用 SO_REUSEPORT 时，我们的做法变成了创建多个进程，每个进程独立的使用`socket() + bind() + listen() + epoll_create()`，在这个阶段中多个进程所监听的是同一个 IP + PORT，对于每个进程来说他们的 listenfd 不是同一个套接字，但却是监听了同一个地址和端口。该 IP + PORT 有事件到达时，内核根据负载均衡原则唤醒其中的一个进程，即对应监听的 eventpoll 会监听到可读事件，这样就避免了惊群问题。
+而 linux 提供了`SO_REUSEPORT`标识，**这个标识的关键作用是允许多个 socket 同时监听相同的 IP + PORT，当有事件到来时，内核会自动负载均衡的选择唤醒其中一个 socket。**因此在使用 SO_REUSEPORT 时，我们的做法变成了创建多个进程，每个进程独立的使用`socket() + bind() + listen() + epoll_create()`，在这个阶段中多个进程所监听的是同一个 IP + PORT，对于每个进程来说他们的 listenfd 不是同一个套接字，但却是监听了同一个地址和端口。该 IP + PORT 有事件到达时，内核根据负载均衡原则唤醒其中的一个进程，即对应监听的 eventpoll 会监听到可读事件，这样就避免了惊群问题。
 
-**注意的是 SO_REUSEPORT 参数必须在两条 socket 间同时设置，才能绑定成功，同时对于已经处于 TIME_WAIT 状态的 socket，绑定也会失败，因此一般同时使用 SO_REUSEADDR 和  SO_REUSEPORT 参数。**
+注意的是 SO_REUSEPORT 参数必须在两条 socket 间同时设置，才能绑定成功，同时对于已经处于 TIME_WAIT 状态的 socket，绑定也会失败，因此一般同时使用 SO_REUSEADDR 和  SO_REUSEPORT 参数。
 
 ```c
 // 复用地址和端口号
