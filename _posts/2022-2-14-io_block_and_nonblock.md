@@ -86,14 +86,13 @@ if (clientfd == -1)
     serveraddr.sin_port = htons(SERVER_PORT);
     if (connect(clientfd, (sockaddr*)&serveraddr, sizeof(serveraddr)) == -1)
     {
-        std::cout << "connect socket error." << std::endl;
-        close(clientfd);
-        return -1;
+            std::cout << "connect socket error." << std::endl;
+            close(clientfd);
+            return -1;
     }
     ```
 
     - 非阻塞： 非阻塞模式下，调用会立即返回，首先需要根据返回状态判断是否需要重试，其次需要在实际使用该clientfd之前，借助`epoll`等多路复用技术检测是否已经可写，并且在 linux 平台还需要额外检测判断该 socket 是否报错（在socket 报错的情况下，会返回可写状态，即返回1）
-
     ```cpp
     // 非阻塞模式下
     sockaddr_in serveraddr;
