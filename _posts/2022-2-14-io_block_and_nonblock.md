@@ -77,8 +77,8 @@ if (clientfd == -1)
 -  参数3：addr 变量的大小，可由 sizeof 计算。在这里该参数不是一个指针，但是在`accept()`函数中则需要的是一个指针类型。 
 -  返回值：当调用失败时返回 -1，且错误信息可由 errno 中获取 
 -  在阻塞和非阻塞IO下调用方式有区别：
-   - 阻塞：connect 对应的是 TCP 三次握手的发送 SYN 操作（CLOSE -> SYN_SEND），因此在阻塞模式下会等待服务端返回的`SYN-ACK`报文（SYS_SEND -> ESTABLISH），至少阻塞一个RTT时间。
-   
+   - 阻塞：connect 对应的是 TCP 三次握手的发送 SYN 操作（CLOSE -> SYN_SEND），因此在阻塞模式下会等待服务端返回的`SYN-ACK`报文（SYS_SEND -> ESTABLISH），至少阻塞一个RTT时间。123
+
 ```cpp
 // 阻塞模式下
 sockaddr_in serveraddr;
