@@ -330,8 +330,11 @@ if (bind(listenfd, (sockaddr*)&bindaddr, sizeof(bindaddr)) == -1){
 
 - 参数1：套接字
 - 参数2：backlong 参数，一般使用 SOMAXCONN 参数
-作用1：决定全连接队列的上限 = min(SOMAXCONN, backlog)；
-作用2：决定半连接队列的上限 = min(SOMAXCONN, backlog, tcp_max_syn_backlog)
+
+    作用1：决定全连接队列的上限 = min(SOMAXCONN, backlog)；
+
+    作用2：决定半连接队列的上限 = min(SOMAXCONN, backlog, tcp_max_syn_backlog)；
+    
 - 返回值：-1表示失败
 
 ```cpp
