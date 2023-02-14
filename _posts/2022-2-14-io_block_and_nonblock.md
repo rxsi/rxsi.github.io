@@ -445,6 +445,7 @@ uint16_t htons(uint16_t netshort); // 将 short 类型转换为网络字节序
 ```
 
 **判断本机字节序的方式：**
+
 使用一个 2 字节的十六进制数，如 unsigned short num = 0x1234，然后将其强行转换为 1 字节的 char 类型，**会把高字节部分丢弃**，如 char mode = (char)&num。也就是如果是小端序，那么结果是`34`，大端序则为`12`。
 ## SO_REUSEADDR 和 SO_REUSEPORT
 ### SO_REUSEADDR
