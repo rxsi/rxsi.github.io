@@ -16,10 +16,10 @@ author: Rxsi
 ### files_struct
 ```c
 struct files_struct { 
-	...
-	struct fdtable  *fdt; // 指向的是file结构体
-	struct fdtable  fdtab;  
-	...
+    ...
+    struct fdtable  *fdt; // 指向的是file结构体
+    struct fdtable  fdtab;  
+    ...
 };
 ```
 <!--more-->
@@ -130,7 +130,7 @@ if (clientfd == -1)
     FD_ZERO(&writeset);
     FD_SET(clientfd, &writeset);
     timeval tv;
-    tv.tv_sec = 3;
+    tv.tv_sec = 3; // 这里是阻塞时间，如果系统允许长时间阻塞那么这里要大点，否则可能出现实际可连接（就是较慢）但是因为超时而直接关闭了
     tv.tv_usec = 0;
     if (select(clientfd + 1, NULL, &writeset, NULL, &tv) != 1) // 阻塞等待一段时间让其成功建立三次握手，如果建立成功那么会返回可写，当然也可能是出错了，所以下面还要继续判断
     { 
