@@ -28,7 +28,7 @@ author: Rxsi
 
 <!--more-->
 ### TIME_WAIT状态过多的危害：
-1. 占用内存资源，虽然在 TCP 转为`TIME_WAIT`状态之后会用一个轻量的数据结构保存地址端口等必要信息，但是如果存在大量的这些数据结构还是对内存有一定的影响
+1. 占用内存资源，虽然在 TCP 转为`TIME_WAIT`状态之后会用一个轻量的数据结构保存地址端口等必要信息，但是依然占有文件描述符，而一个进程所能拥有的文件描述符是由限制的；
 2. 占用端口资源，当端口资源被占用满了，会导致无法创建新的连接，一台机器的可用端口是有限的，在 linux 系统的可用端口配置如下：
     ```shell
     rxsi@VM-20-9-debian:~$ cat /proc/sys/net/ipv4/ip_local_port_range 
@@ -65,6 +65,9 @@ author: Rxsi
     setsockopt(listenfd, SOL_SOCKET, SO_REUSEPORT, (char*)&on, sizeof(on));
     ```
     开启该参数之后，即可重用处于`TIME_WAIT`状态的 socket，一般用在服务端（注意 SO_REUSEPORT 是为了使多个 socket 同时绑定相同的 IP、端口，但是却无法绑定处于`TIME_WAIT`状态的 socket，因此一般同时使用这两个参数）。通过该参数才可以实现服务的快速重启，否则重启之后会无法对端口进行监听
+
+    ` SO_LINGER：
+    这个参数可以使调用 close 时直接下发`RST`报文，而粗暴的直接关闭 tcp，并不推荐使用。
 
 ## CLOSE_WAIT
 当系统接收到了第一次挥手包并回复第二次挥手包后就会进入`CLOSE_WAIT`状态
