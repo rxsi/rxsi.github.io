@@ -78,18 +78,18 @@ if (clientfd == -1)
 -  返回值：当调用失败时返回 -1，且错误信息可由 errno 中获取 
 -  在阻塞和非阻塞IO下调用方式有区别：
    - 阻塞：connect 对应的是 TCP 三次握手的发送 SYN 操作（CLOSE -> SYN_SEND），因此在阻塞模式下会等待服务端返回的`SYN-ACK`报文（SYS_SEND -> ESTABLISH），至少阻塞一个RTT时间。
-    ```cpp
-    // 阻塞模式下
-    sockaddr_in serveraddr;
-    serveraddr.sin_family = AF_INET;
-    serveraddr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS); // 解析服务端ip地址
-    serveraddr.sin_port = htons(SERVER_PORT);
-    if (connect(clientfd, (sockaddr*)&serveraddr, sizeof(serveraddr)) == -1){
-        std::cout << "connect socket error." << std::endl;
-        close(clientfd);
-        return -1;
-    }
-    ```
+```cpp
+// 阻塞模式下
+sockaddr_in serveraddr;
+serveraddr.sin_family = AF_INET;
+serveraddr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS); // 解析服务端ip地址
+serveraddr.sin_port = htons(SERVER_PORT);
+if (connect(clientfd, (sockaddr*)&serveraddr, sizeof(serveraddr)) == -1){
+    std::cout << "connect socket error." << std::endl;
+    close(clientfd);
+    return -1;
+}
+```
 
    - 非阻塞： 非阻塞模式下，调用会立即返回，首先需要根据返回状态判断是否需要重试，其次需要在实际使用该clientfd之前，借助`epoll`等多路复用技术检测是否已经可写，并且在 linux 平台还需要额外检测判断该 socket 是否报错（在socket 报错的情况下，会返回可写状态，即返回1）  
     ```cpp
