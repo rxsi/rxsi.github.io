@@ -180,7 +180,7 @@ int tcp_conn_request(struct request_sock_ops *rsk_ops,
 rxsi@VM-20-9-debian:~$ cat /proc/sys/net/ipv4/tcp_syncookies 
 1
 ```
-默认的值为 **1**，代表了只在半连接队列满了之后才使用 cookie；**2 **代表的是总是开启 cookie 功能，**0 **代表不开启 cookie 功能，此时如果半连接队列满了，那么会直接丢掉这个`SYN`包。
+默认的值为 **1**，代表了只在半连接队列满了之后才使用 cookie；**2** 代表的是总是开启 cookie 功能，**0** 代表不开启 cookie 功能，此时如果半连接队列满了，那么会直接丢掉这个`SYN`包。
 
 当使用了 cookie 功能时，服务端发送给客户端的序列号就是计算出的 cookie 值，TODO ？怎么确定服务端的发送序列号
 
