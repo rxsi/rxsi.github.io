@@ -544,7 +544,7 @@ flag: child, processID: 9738, before ftell: 4000, len: 0, empty data, after ftel
 flag: parent, processID: 9737, before ftell: 990, len: 10, data: aaaaaaaaa, after ftell: 1000, fd: 3
 flag: child, processID: 9738, before ftell: 4000, len: 0, empty data, after ftell: 4000, fd: 3
 ```
-经测试发现需要把父进程的读操作提前到`fork()`函数之前才可以正常读取：
+经测试发现需要把父进程的读操作提前到`fork()`函数之前才可以正常读取：TODO
 ```cpp
 int main()
 {
