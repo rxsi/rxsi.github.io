@@ -537,7 +537,7 @@ int main()
     }
 }
 ```
-在测试的过程中发现如果使用文件指针以上面那种代码形式会出现读取异常，其中一个进程的读取偏移量会直接定位到文件尾部，不清楚具体原因：
+在测试的过程中发现如果使用文件指针以上面那种代码形式会出现读取异常，其中一个进程的读取偏移量会直接定位到文件尾部，不清楚具体原因：TODO
 ```shell
 flag: parent, processID: 9737, before ftell: 980, len: 10, data: aaaaaaaaa, after ftell: 990, fd: 3
 flag: child, processID: 9738, before ftell: 4000, len: 0, empty data, after ftell: 4000, fd: 3
