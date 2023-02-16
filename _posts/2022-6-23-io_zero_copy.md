@@ -13,14 +13,17 @@ author: Rxsi
 ## IO类型
 linux 系统针对不同的场景，实现了以下几种 IO 类型：
 - Buffered IO（默认方式）
+
     每次读取都需要经过 PageCache 缓存，这种方式的效率性能最高
 
 - Direct IO
+
     读取不经过 PageCache 缓存，调用系统应用时需要指定 O_DIRECT 参数。因为没有经过内存缓存的缘故，虽然数据本身会直接落地到磁盘，但是一些文件的其他元数据还是会缓存在内存中，因此我们在使用 Direct IO 时，还需要配合使用`fsync`进行强制文件写入磁盘。
    
     这种方式是应用在某些具有自己缓存方案的场景，如数据库自己设计了一套缓存方案，因此需要使用 Direct IO 来加速数据写入磁盘的速度
 
 - AIO
+
     异步IO，linux 的 AIO 只能指定为 Direct IO 的形式，即不能经过 PageCache
 
 <!--more-->
@@ -87,6 +90,7 @@ location /video/ {
 
 ## 传统的文件传输
 在使用零拷贝技术之前，尽管有了`DMA`技术，但是文件的读取还是有很大的开销，伴随着频繁的用户空间和内核空间切换，以及额外的数据复制。
+
 一般我们使用以下两个系统调用：
 ```cpp
 read(file, tmp_buf, len);
@@ -97,6 +101,7 @@ write(socket, tmp_buf, len);
 ![normal_file.png](/images/io_zero_copy/normal_file.png)
 
 整个流程共发生了`4次`用户态和内核态的切换，当系统调用时都会先从用户态切换到内核态，而等内核完成处理之后，就又从内核态切换回用户态
+
 在这个过程中，还发生了`4次`数据拷贝，其中两次是`DMA`拷贝，而另外的两次需要通过`CPU`拷贝
 ## 零拷贝技术
 零拷贝技术通常有两种实现方式：
@@ -137,6 +142,7 @@ return：
 
 ### SG-DMA 技术
 如果网卡本身支持`SG-DMA`技术，则可以减少通过 CPU 把内核缓冲区中的数据拷贝到 socket 缓冲区的过程
+
 可通过以下命令，查看本机网卡是否支持 scatter-gather 技术：
 ```shell
 rxsi@VM-20-9-debian:~$ /usr/sbin/ethtool -k eth0 | grep scatter-gather
@@ -178,6 +184,7 @@ public GetMessageResult getMessage(final String group, final String topic, final
 消费者的消息读取也主要依赖于`mmap + write`形式
 ### kafka
 当 Producer 生产者发送数据到 broker 时，采用`mmap + write`的形式，实现顺序的快速写入
+
 当 Consumer 消费者从 boker 读取数据时，采用`sendfile`的形式，将磁盘文件读到系统内核后，直接通过 socket buffer 进行数据发送
 ### nginx
 nginx 可以通过配置开启零拷贝技术
@@ -190,6 +197,7 @@ http {
 ```
 ## 大文件传输
 前面在 PageCache 一节介绍其缺点时，指出了在操作大文件时，会由于占用了 PageCache 而导致后续的操作无法利用到 PageCache 提供的缓存作用，因此可以使用 Direct IO 的方式绕过。
+
 同时为了避免同步 IO 的阻塞问题，可以使用 AIO 进行异步处理，而 linux 的 AIO 只能使用 Direct IO 形式，因此对于大文件的操作，我们应该使用`AIO + Direct IO`的形式
 
 ![big_file.png](/images/io_zero_copy/big_file.png)
