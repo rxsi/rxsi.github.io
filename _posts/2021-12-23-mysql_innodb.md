@@ -98,7 +98,7 @@ redo log 针对的是事务完成并返回给客户端结果，但此时脏页�
 
 这时候就需要 doublewrite 机制了，通过 doublewrite 记录的脏页直接覆盖被损坏的磁盘数据，即可恢复数据，此过程不需要 redo log。而如果 doublewrite 写入过程中宕机了，那么证明磁盘空间还完好，直接通过 redo log 进行恢复即可。
 
-前面已经论证了为何在右 redo log 的情况下还需要 doublewrite，那么反过来是否可以只用 doublewrite 而弃用 redo log 呢？答案当前是否定的，redo log 的日志写入伴随着事务执行的过程中，针对的是单条语句对磁盘空间的物理作用，而 doublewrite 的生成是在脏页准备回写时，想象一下如果没有 redo log，那么就可能出现执行了事务产生了脏页，也回复客户端事务执行成功了，在写回到 doublewrite 之前宕机了，那么就会丢失数据，而如果等写回 doublewrite 之后再返回给客户端结果则又是一种低效的方式。因此 redo log 和 doublewrite 都是必须的。
+前面已经论证了为何在有 redo log 的情况下还需要 doublewrite，那么反过来是否可以只用 doublewrite 而弃用 redo log 呢？答案当然是否定的，redo log 的日志写入伴随着事务执行的过程中，针对的是单条语句对磁盘空间的物理作用，而 doublewrite 的生成是在脏页准备回写时，想象一下如果没有 redo log，那么就可能出现执行了事务产生了脏页，也回复客户端事务执行成功了，在写回到 doublewrite 之前宕机了，那么就会丢失数据，而如果等写回 doublewrite 之后再返回给客户端结果则又是一种低效的方式。因此 redo log 和 doublewrite 都是必须的。
 ## 自适应哈希索引（提升性能）
 通常一个 B+ 树会设计为3、4层的结构，每一层代表了一次IO，因此至少需要3、4次 IO 才能读取到值。innodb 会根据查询频率，自动对热点数据建立 hash 索引，条件如下：
 
